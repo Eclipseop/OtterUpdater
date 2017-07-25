@@ -2,9 +2,13 @@ package com.eclipseop.updater.analyzers.impl;
 
 import com.eclipseop.updater.Bootstrap;
 import com.eclipseop.updater.analyzers.Analyzer;
+import com.eclipseop.updater.util.Mask;
+import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.ClassNode;
+import org.objectweb.asm.tree.FieldInsnNode;
 
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created by Eclipseop.
@@ -21,7 +25,7 @@ public class InterfaceComponentAnalyzer extends Analyzer {
 				.findFirst()
 				.ifPresent(c -> {
 					classNode[0] = c;
-					Bootstrap.getBuilder().addClass(c.name, "components", "parent").putName("OtterUpdater", "InterfaceComponent");
+					Bootstrap.getBuilder().addClass(c.name, "components", "parent", "text").putName("OtterUpdater", "InterfaceComponent");
 				});
 
 
@@ -30,19 +34,17 @@ public class InterfaceComponentAnalyzer extends Analyzer {
 
 	@Override
 	public void findHooks(ClassNode classNode) {
-		/*
-		classNode.fields.stream().filter(p -> p.desc.equals("[L" + classNode.name + ";")).findFirst().ifPresent(field -> {
-			Bootstrap.getBuilder().addField(classNode.name, field.name).putName("OtterUpdater", "components");
-		});
-		*/
-
 		classNode.fields.stream().forEach(field -> {
 			if (field.desc.equals("[L" + classNode.name + ";")) {
 				Bootstrap.getBuilder().addField(classNode.name, field.name).putName("OtterUpdater", "components");
 			} else if (field.desc.equals("L" + classNode.name + ";")) {
 				Bootstrap.getBuilder().addField(classNode.name, field.name).putName("OtterUpdater", "parent");
-				System.out.println("1");
 			}
+		});
+
+		final List<AbstractInsnNode> abstractInsnNodes = Mask.find(classNode, Mask.INVOKEVIRTUAL, Mask.PUTFIELD.own(classNode.name));
+		abstractInsnNodes.stream().filter(p -> p instanceof FieldInsnNode).findFirst().ifPresent(ain -> {
+			Bootstrap.getBuilder().addField(classNode.name, ((FieldInsnNode)ain).name).putName("OtterUpdater", "text");
 		});
 
 		/*
