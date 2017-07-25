@@ -42,30 +42,11 @@ public class InterfaceComponentAnalyzer extends Analyzer {
 			}
 		});
 
-		final List<AbstractInsnNode> textMask = Mask.find(classNode, Mask.INVOKEVIRTUAL, Mask.PUTFIELD.own(classNode.name));
-		textMask.stream().filter(p -> p instanceof FieldInsnNode).findFirst().ifPresent(ain -> {
-			Bootstrap.getBuilder().addField(classNode.name, ((FieldInsnNode)ain).name).putName("OtterUpdater", "text");
-		});
-
-		/*
-		getClassNodes().forEach(node -> {
-			node.methods.stream()
-					.filter(p -> p.desc.contains("L" + Bootstrap.getBuilder().findByName("ScriptEvent").getClassObsName() + ";") ||
-							p.desc.contains("L" + Bootstrap.getBuilder().findByName("RuneScript").getClassObsName() + ";"))
-					.forEach(method -> {
-						Arrays.stream(method.instructions.toArray()).filter(p -> p instanceof IntInsnNode).forEach(inst -> {
-							final IntInsnNode iin = (IntInsnNode) inst;
-							switch (iin.operand) {
-								case 1109:
-									System.out.println(node.name + "." + method.name + "()");
-									final AbstractInsnNode next = Mask.next(iin, 100, Mask.PUTFIELD.own(classNode.name).distance(10));
-									if (next instanceof FieldInsnNode) {
-										System.out.println(((FieldInsnNode) next).owner + "." + ((FieldInsnNode) next).name);
-									}
-							}
-						});
-					});
-		});
-		*/
+		final List<AbstractInsnNode> textMask = Mask.find(classNode, Mask.INVOKEVIRTUAL, Mask.PUTFIELD.own(classNode.name).describe("Ljava/lang/String;"));
+		if (textMask != null) {
+			textMask.stream().filter(p -> p instanceof FieldInsnNode).findFirst().ifPresent(ain -> {
+				Bootstrap.getBuilder().addField(classNode.name, ((FieldInsnNode) ain).name).putName("OtterUpdater", "text");
+			});
+		}
 	}
 }
