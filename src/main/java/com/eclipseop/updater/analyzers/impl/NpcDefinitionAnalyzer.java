@@ -2,10 +2,14 @@ package com.eclipseop.updater.analyzers.impl;
 
 import com.eclipseop.updater.Bootstrap;
 import com.eclipseop.updater.analyzers.Analyzer;
+import com.eclipseop.updater.util.Mask;
+import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.ClassNode;
+import org.objectweb.asm.tree.FieldInsnNode;
 
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created by Eclipseop.
@@ -23,7 +27,7 @@ public class NpcDefinitionAnalyzer extends Analyzer {
 				.findFirst()
 				.ifPresent(c -> {
 					classNode[0] = c;
-					Bootstrap.getBuilder().addClass(c.name, "name", "actions").putName("OtterUpdater", "NpcDefinition");
+					Bootstrap.getBuilder().addClass(c.name, "name", "actions", "id").putName("OtterUpdater", "NpcDefinition");
 				});
 
 		return classNode[0];
@@ -38,5 +42,11 @@ public class NpcDefinitionAnalyzer extends Analyzer {
 				Bootstrap.getBuilder().addField(classNode.name, c.name).putName("OtterUpdater", "actions");
 			}
 		});
+
+		final List<AbstractInsnNode> idMask = Mask.find(classNode, Mask.GETFIELD.describe("I"), Mask.I2L.distance(5));
+		idMask.stream().filter(p -> p instanceof FieldInsnNode).findFirst().ifPresent(ain -> {
+			Bootstrap.getBuilder().addField(classNode.name, ((FieldInsnNode)ain).name).putName("OtterUpdater", "id");
+		});
+
 	}
 }

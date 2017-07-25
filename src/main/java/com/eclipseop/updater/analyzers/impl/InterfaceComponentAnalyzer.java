@@ -42,8 +42,8 @@ public class InterfaceComponentAnalyzer extends Analyzer {
 			}
 		});
 
-		final List<AbstractInsnNode> abstractInsnNodes = Mask.find(classNode, Mask.INVOKEVIRTUAL, Mask.PUTFIELD.own(classNode.name));
-		abstractInsnNodes.stream().filter(p -> p instanceof FieldInsnNode).findFirst().ifPresent(ain -> {
+		final List<AbstractInsnNode> textMask = Mask.find(classNode, Mask.INVOKEVIRTUAL, Mask.PUTFIELD.own(classNode.name));
+		textMask.stream().filter(p -> p instanceof FieldInsnNode).findFirst().ifPresent(ain -> {
 			Bootstrap.getBuilder().addField(classNode.name, ((FieldInsnNode)ain).name).putName("OtterUpdater", "text");
 		});
 
