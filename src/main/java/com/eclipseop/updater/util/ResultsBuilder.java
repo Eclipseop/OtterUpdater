@@ -92,42 +92,6 @@ public class ResultsBuilder {
 			});
 			System.out.println();
 		}
-
-/*
-		classMap.forEach((s, m) -> {
-
-
-
-
-
-			System.out.println("⌂ " + m.getName("OtterUpdater").toArray()[0] + ": " + s);
-
-			fieldMap.values().stream()
-					.filter(p -> p.getProperties().get("classObsName").equals(s))
-					.forEach(c -> {
-						String line =
-								"੦ " + c.getName("OtterUpdater").toArray()[0] + " - " +
-										(c.isStatic() ? c.getStaticHost() : c.getClassObsName()) + "." + c.getEntityObsName();
-						if (c.getMultiplier() != null) {
-							line += " * " + c.getMultiplier();
-						}
-						System.out.println(line);
-					});
-
-			//broke
-			expectedMap.forEach((c, f) -> { //c classnode name, f arraylist of expected fields
-				if (m.getClassObsName().equals(c)) {
-
-					for (String expected : f) {
-						if (!fieldMap.values().stream().filter(p -> p.getClassObsName().equals(c)).anyMatch(p -> p.getName("OtterUpdater").toArray()[0].equals(expected))) {
-							System.out.println("✖ BROKE - " + expected);
-						}
-					}
-				}
-			});
-			System.out.println();
-		});
-		*/
 		return this;
 	}
 
@@ -173,12 +137,6 @@ public class ResultsBuilder {
 		public MappedEntity putJunkParam(String type) {
 			return putProperty("junkParam", type);
 		}
-
-		/*
-		public MappedEntity putStatic(boolean isStatic) {
-			return putProperty("isStatic", isStatic);
-		}
-		*/
 
 		public MappedEntity putStatic(final String host) {
 			return putProperty("staticHost", host);
@@ -249,16 +207,6 @@ public class ResultsBuilder {
 			String multiplier = (String) properties.getOrDefault("junkParam", null);
 			if (multiplier == null) return null;
 			return multiplier;
-		}
-	}
-
-	public static void main(String[] args) {
-		final Map<String, String> stringStringTreeMap = new TreeMap<>();
-		stringStringTreeMap.put("x", "x");
-		stringStringTreeMap.put("a", "a");
-		stringStringTreeMap.put("d", "d");
-		for (String s : stringStringTreeMap.keySet()) {
-			System.out.println(s);
 		}
 	}
 }
