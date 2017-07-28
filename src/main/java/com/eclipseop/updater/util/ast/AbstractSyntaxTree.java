@@ -71,13 +71,16 @@ public class AbstractSyntaxTree {
 							stack.add(new VarExpression(loadPrefix + "field" + ((VarInsnNode) ain).var));
 							break;
 						case Opcodes.AASTORE:
-							final Expression array = stack.get(stack.size() - 3);
-							final Expression index = stack.get(stack.size() - 2);
+							if (stack.size() >= 3) {
+								final Expression array = stack.get(stack.size() - 3);
+								final Expression index = stack.get(stack.size() - 2);
 
-							stack.add(new ArrayStoreExpression(array, index, lastExpression));
-							stack.remove(array);
-							stack.remove(index);
-							stack.remove(lastExpression);
+								stack.add(new ArrayStoreExpression(array, index, lastExpression));
+
+								stack.remove(array);
+								stack.remove(index);
+								stack.remove(lastExpression);
+							}
 							break;
 						case Opcodes.AALOAD:
 							final Expression loadArray = stack.get(stack.size() - 2);
@@ -123,23 +126,25 @@ public class AbstractSyntaxTree {
 						case Opcodes.IDIV:
 						case Opcodes.IADD:
 						case Opcodes.ISUB:
-							final Expression left = stack.get(stack.size() - 2);
+							if (stack.size() >= 2) {
+								final Expression left = stack.get(stack.size() - 2);
 
-							String operator;
-							if (opcode == Opcodes.IADD) {
-								operator = "+";
-							} else if (opcode == Opcodes.ISUB) {
-								operator = "-";
-							} else if (opcode == Opcodes.IDIV) {
-								operator = "/";
-							} else {
-								operator = "*";
+								String operator;
+								if (opcode == Opcodes.IADD) {
+									operator = "+";
+								} else if (opcode == Opcodes.ISUB) {
+									operator = "-";
+								} else if (opcode == Opcodes.IDIV) {
+									operator = "/";
+								} else {
+									operator = "*";
+								}
+
+								stack.add(new MathExpression(operator, left, lastExpression));
+
+								stack.remove(left);
+								stack.remove(lastExpression);
 							}
-
-							stack.add(new MathExpression(operator, left, lastExpression));
-
-							stack.remove(left);
-							stack.remove(lastExpression);
 							break;
 							/*
 							case Opcodes.INVOKESPECIAL:
@@ -176,17 +181,34 @@ public class AbstractSyntaxTree {
 						case Opcodes.IFEQ:
 							stack.remove(lastExpression);
 							break;
+						case Opcodes.IF_ICMPEQ:
+						case Opcodes.IF_ICMPNE:
+						case Opcodes.IF_ICMPGT:
+						case Opcodes.IF_ICMPGE:
 								/*
-							case Opcodes.IF_ICMPNE:
-							case Opcodes.IF_ICMPGT:
-							case Opcodes.IF_ICMPGE:
 								stack.remove(stack.size() - 2);
 								stack.remove(lastExpression);
-								break;
 								*/
+							String operation = "";
+							if (opcode == Opcodes.IF_ICMPNE) {
+								operation = "!=";
+							} else if (opcode == Opcodes.IF_ICMPGT) {
+								operation = ">";
+							} else if (opcode == Opcodes.IF_ICMPGE) {
+								operation = ">=";
+							} else if (opcode == Opcodes.IF_ICMPEQ) {
+								operation = "==";
+							}
+
+							if (stack.size() >= 2) {
+								stack.add(new ConditionExpression(stack.get(stack.size() - 2), lastExpression, operation));
+							}
+							break;
+
 						default:
 							break;
 					}
+					//System.out.println(Printer.OPCODES[opcode]);
 
 					if (opcodeToFind == opcode) {
 						tempList.add(stack.get(stack.size() - 1));
