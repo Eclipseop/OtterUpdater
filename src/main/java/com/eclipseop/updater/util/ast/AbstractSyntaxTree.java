@@ -26,126 +26,121 @@ public class AbstractSyntaxTree {
 		list.stream().forEach(node -> {
 			node.methods.stream().forEach(method -> {
 				final List<Expression> stack = new LinkedList<>();
-				//System.out.println(method.owner + "." + method.name + "()");
 
-				//if (node.name.equals("bh") && method.name.equals("o")) {
-					//System.out.println(1);
-					Arrays.stream(method.instructions.toArray()).forEach(ain -> {
-						final int opcode = ain.opcode();
+				Arrays.stream(method.instructions.toArray()).forEach(ain -> {
+					final int opcode = ain.opcode();
 
-						if (opcode == -1) {
-							return;
-						}
+					if (opcode == -1) {
+						return;
+					}
 
-						//System.out.println(Printer.OPCODES[opcode]);
+					Expression lastExpression = null;
+					if (stack.size() > 0) {
+						lastExpression = stack.get(stack.size() - 1);
+					}
+					switch (opcode) {
+						case Opcodes.GOTO:
+							final JumpInsnNode jin = (JumpInsnNode) ain;
+							//System.out.println(jin.label.getLabel().getOffset());
+							break;
+						case Opcodes.NEWARRAY:
+							stack.add(new VarExpression("Array" + ((IntInsnNode) ain).operand));
+							break;
+						case Opcodes.NEW:
+							stack.add(new VarExpression(((TypeInsnNode) ain).desc));
+							break;
+						case Opcodes.GETFIELD:
+							final FieldInsnNode fieldFin = (FieldInsnNode) ain;
+							stack.add(new InstanceExpression(lastExpression, fieldFin.owner + "." + fieldFin.name));
+							stack.remove(lastExpression);
+							break;
+						case Opcodes.GETSTATIC:
+							final FieldInsnNode staticFin = (FieldInsnNode) ain;
+							stack.add(new VarExpression(staticFin.owner + "." + staticFin.name));
+							break;
+						case Opcodes.LLOAD:
+						case Opcodes.ALOAD:
+						case Opcodes.ILOAD:
+							String loadPrefix;
+							if (opcode == Opcodes.ASTORE) {
+								loadPrefix = "A";
+							} else {
+								loadPrefix = "I";
+							}
 
-						Expression lastExpression = null;
-						if (stack.size() > 0) {
-							lastExpression = stack.get(stack.size() - 1);
-						}
-						switch (opcode) {
-							case Opcodes.GOTO:
-								final JumpInsnNode jin = (JumpInsnNode) ain;
-								//System.out.println(jin.label.getLabel().getOffset());
-								break;
-							case Opcodes.NEWARRAY:
-								stack.add(new VarExpression("Array" + ((IntInsnNode) ain).operand));
-								break;
-							case Opcodes.NEW:
-								stack.add(new VarExpression(((TypeInsnNode) ain).desc));
-								break;
-							case Opcodes.GETFIELD:
-								final FieldInsnNode fieldFin = (FieldInsnNode) ain;
-								stack.add(new InstanceExpression(lastExpression, fieldFin.owner + "." + fieldFin.name));
-								stack.remove(lastExpression);
-								break;
-							case Opcodes.GETSTATIC:
-								final FieldInsnNode staticFin = (FieldInsnNode) ain;
-								stack.add(new VarExpression(staticFin.owner + "." + staticFin.name));
-								break;
-							case Opcodes.LLOAD:
-							case Opcodes.ALOAD:
-							case Opcodes.ILOAD:
-								String loadPrefix;
-								if (opcode == Opcodes.ASTORE) {
-									loadPrefix = "A";
-								} else {
-									loadPrefix = "I";
-								}
+							stack.add(new VarExpression(loadPrefix + "field" + ((VarInsnNode) ain).var));
+							break;
+						case Opcodes.AASTORE:
+							final Expression array = stack.get(stack.size() - 3);
+							final Expression index = stack.get(stack.size() - 2);
 
-								stack.add(new VarExpression(loadPrefix + "field" + ((VarInsnNode) ain).var));
-								break;
-							case Opcodes.AASTORE:
-								final Expression array = stack.get(stack.size() - 3);
-								final Expression index = stack.get(stack.size() - 2);
+							stack.add(new ArrayStoreExpression(array, index, lastExpression));
+							stack.remove(array);
+							stack.remove(index);
+							stack.remove(lastExpression);
+							break;
+						case Opcodes.AALOAD:
+							final Expression loadArray = stack.get(stack.size() - 2);
+							stack.add(new ArrayAccessExpression(loadArray, lastExpression));
+							stack.remove(loadArray);
+							stack.remove(lastExpression);
+							break;
+						case Opcodes.DLOAD:
+						case Opcodes.ASTORE:
+						case Opcodes.ISTORE:
+							String storePrefix;
+							if (opcode == Opcodes.ASTORE) {
+								storePrefix = "A";
+							} else if (opcode == Opcodes.ISTORE) {
+								storePrefix = "I";
+							} else {
+								storePrefix = "D";
+							}
 
-								stack.add(new ArrayStoreExpression(array, index, lastExpression));
-								stack.remove(array);
-								stack.remove(index);
-								stack.remove(lastExpression);
-								break;
-							case Opcodes.AALOAD:
-								final Expression loadArray = stack.get(stack.size() - 2);
-								stack.add(new ArrayAccessExpression(loadArray, lastExpression));
-								stack.remove(loadArray);
-								stack.remove(lastExpression);
-								break;
-							case Opcodes.DLOAD:
-							case Opcodes.ASTORE:
-							case Opcodes.ISTORE:
-								String storePrefix;
-								if (opcode == Opcodes.ASTORE) {
-									storePrefix = "A";
-								} else if (opcode == Opcodes.ISTORE) {
-									storePrefix = "I";
-								} else {
-									storePrefix = "D";
-								}
+							stack.add(new FieldExpression(storePrefix + "field" + ((VarInsnNode) ain).var, lastExpression));
+							stack.remove(lastExpression);
+							break;
+						case Opcodes.LDC:
+							stack.add(new VarExpression(String.valueOf(((LdcInsnNode) ain).cst)));
+							break;
+						case Opcodes.SIPUSH:
+						case Opcodes.BIPUSH:
+							stack.add(new IntegerExpression(((IntInsnNode) ain).operand));
+							break;
+						case Opcodes.ICONST_M1:
+						case Opcodes.ICONST_0:
+						case Opcodes.ICONST_1:
+						case Opcodes.ICONST_2:
+						case Opcodes.ICONST_3:
+						case Opcodes.ICONST_4:
+						case Opcodes.ICONST_5:
+							stack.add(new IntegerExpression(opcode - Opcodes.ICONST_0));
+							break;
+						case Opcodes.ACONST_NULL:
+							stack.add(new VarExpression("null"));
+							break;
+						case Opcodes.IMUL:
+						case Opcodes.IDIV:
+						case Opcodes.IADD:
+						case Opcodes.ISUB:
+							final Expression left = stack.get(stack.size() - 2);
 
-								stack.add(new FieldExpression(storePrefix + "field" + ((VarInsnNode) ain).var, lastExpression));
-								stack.remove(lastExpression);
-								break;
-							case Opcodes.LDC:
-								stack.add(new VarExpression(String.valueOf(((LdcInsnNode) ain).cst)));
-								break;
-							case Opcodes.SIPUSH:
-							case Opcodes.BIPUSH:
-								stack.add(new IntegerExpression(((IntInsnNode) ain).operand));
-								break;
-							case Opcodes.ICONST_M1:
-							case Opcodes.ICONST_0:
-							case Opcodes.ICONST_1:
-							case Opcodes.ICONST_2:
-							case Opcodes.ICONST_3:
-							case Opcodes.ICONST_4:
-							case Opcodes.ICONST_5:
-								stack.add(new IntegerExpression(opcode - Opcodes.ICONST_0));
-								break;
-							case Opcodes.ACONST_NULL:
-								stack.add(new VarExpression("null"));
-								break;
-							case Opcodes.IMUL:
-							case Opcodes.IDIV:
-							case Opcodes.IADD:
-							case Opcodes.ISUB:
-								final Expression left = stack.get(stack.size() - 2);
+							String operator;
+							if (opcode == Opcodes.IADD) {
+								operator = "+";
+							} else if (opcode == Opcodes.ISUB) {
+								operator = "-";
+							} else if (opcode == Opcodes.IDIV) {
+								operator = "/";
+							} else {
+								operator = "*";
+							}
 
-								String operator;
-								if (opcode == Opcodes.IADD) {
-									operator = "+";
-								} else if (opcode == Opcodes.ISUB) {
-									operator = "-";
-								} else if (opcode == Opcodes.IDIV) {
-									operator = "/";
-								} else {
-									operator = "*";
-								}
+							stack.add(new MathExpression(operator, left, lastExpression));
 
-								stack.add(new MathExpression(operator, left, lastExpression));
-
-								stack.remove(left);
-								stack.remove(lastExpression);
-								break;
+							stack.remove(left);
+							stack.remove(lastExpression);
+							break;
 							/*
 							case Opcodes.INVOKESPECIAL:
 							case Opcodes.INVOKESTATIC:
@@ -174,13 +169,13 @@ public class AbstractSyntaxTree {
 								stack.add(new InvokeExpression(min.desc.split("\\)")[1], expressions));
 								break;
 								*/
-							case Opcodes.IRETURN:
-								stack.add(new ReturnExpression(lastExpression));
-								stack.remove(lastExpression);
-								break;
-							case Opcodes.IFEQ:
-								stack.remove(lastExpression);
-								break;
+						case Opcodes.IRETURN:
+							stack.add(new ReturnExpression(lastExpression));
+							stack.remove(lastExpression);
+							break;
+						case Opcodes.IFEQ:
+							stack.remove(lastExpression);
+							break;
 								/*
 							case Opcodes.IF_ICMPNE:
 							case Opcodes.IF_ICMPGT:
@@ -189,25 +184,14 @@ public class AbstractSyntaxTree {
 								stack.remove(lastExpression);
 								break;
 								*/
-							default:
-								//System.out.println(opcode);
-								break;
-						}
-
-					/*
-					if (stack.size() < 10) {
-						stack.forEach(c -> System.out.println(c));
-						System.out.println("--------------------");
+						default:
+							break;
 					}
-					*/
+
 					if (opcodeToFind == opcode) {
 						tempList.add(stack.get(stack.size() - 1));
 					}
-
-
-					});
-					//stack.forEach(c -> System.out.println(c));
-				//}
+				});
 			});
 
 		});
