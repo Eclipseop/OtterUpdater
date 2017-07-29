@@ -22,7 +22,7 @@ public class ClientAnalyzer extends Analyzer {
 				.findFirst()
 				.ifPresent(c -> {
 					classNode[0] = c;
-					Bootstrap.getBuilder().addClass(c.name, "players", "localPlayer", "npcs", "clanMates", "interfaces", "gamestate").putName("OtterUpdater", "Client");
+					Bootstrap.getBuilder().addClass(c.name, "players", "localPlayer", "npcs", "clanMates", "interfaces", "gamestate", "energy").putName("OtterUpdater", "Client");
 				});
 		return classNode[0];
 	}
@@ -31,10 +31,10 @@ public class ClientAnalyzer extends Analyzer {
 	public void findHooks(ClassNode classNode) {
 		final String playerName = Bootstrap.getBuilder().findByName("Player").getClassObsName();
 
-		final List<MethodNode> methodList =
-				getClassNodes().stream().filter(p -> p.name.equals("client")).findFirst().get().methods.stream().filter(p -> p.access == 0 && p.desc.equals("()V")).collect(Collectors.toList());
-
-		for (MethodNode methodNode : methodList) {
+		final List<MethodNode> gamestateMethods =
+				classNode.methods.stream().filter(p -> p.access == 0 && p.desc.equals("()V")).collect(Collectors.toList());
+		gamestate:
+		for (MethodNode methodNode : gamestateMethods) {
 			final List<List<AbstractInsnNode>> abstractInsnNodes = Mask.findAll(methodNode, Mask.LDC, Mask.LDC, Mask.INVOKEVIRTUAL, Mask.LDC, Mask.PUTSTATIC);
 			if (abstractInsnNodes == null) {
 				continue;
@@ -54,7 +54,26 @@ public class ClientAnalyzer extends Analyzer {
 					for (AbstractInsnNode insnNode : abstractInsnNode) {
 						if (insnNode instanceof FieldInsnNode) {
 							Bootstrap.getBuilder().addField("client", ((FieldInsnNode) insnNode).name).putName("OtterUpdater", "gamestate");
+							break gamestate;
 						}
+					}
+				}
+			}
+		}
+
+		final List<MethodNode> energyMethods =
+				classNode.methods.stream().filter(p -> p.desc.startsWith("(L" + Bootstrap.getBuilder().findByName("InterfaceComponent").getClassObsName() + ";")).collect(Collectors.toList()); // TODO: 7/29/2017 check access
+		energy:
+		for (MethodNode methodNode : energyMethods) {
+			final List<List<AbstractInsnNode>> all = Mask.findAll(methodNode, Mask.BIPUSH.operand(11), Mask.IF_ICMPNE, Mask.GETSTATIC);
+			if (all == null) {
+				continue;
+			}
+			for (List<AbstractInsnNode> abstractInsnNodes : all) {
+				for (AbstractInsnNode ain : abstractInsnNodes) {
+					if (ain instanceof FieldInsnNode) {
+						Bootstrap.getBuilder().addField(classNode.name, ((FieldInsnNode) ain).name).putName("OtterUpdater", "energy");
+						break energy;
 					}
 				}
 			}
