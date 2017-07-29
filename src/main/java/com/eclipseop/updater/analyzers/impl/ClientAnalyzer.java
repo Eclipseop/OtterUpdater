@@ -32,7 +32,8 @@ public class ClientAnalyzer extends Analyzer {
 		final String playerName = Bootstrap.getBuilder().findByName("Player").getClassObsName();
 
 		final List<MethodNode> methodList =
-				getClassNodes().stream().filter(p -> p.name.equals("client")).findFirst().get().methods.stream().filter(p -> p.desc.equals("()V")).collect(Collectors.toList()); // TODO: 7/29/2017 filter more
+				getClassNodes().stream().filter(p -> p.name.equals("client")).findFirst().get().methods.stream().filter(p -> p.access == 0 && p.desc.equals("()V")).collect(Collectors.toList());
+
 		for (MethodNode methodNode : methodList) {
 			final List<List<AbstractInsnNode>> abstractInsnNodes = Mask.findAll(methodNode, Mask.LDC, Mask.LDC, Mask.INVOKEVIRTUAL, Mask.LDC, Mask.PUTSTATIC);
 			if (abstractInsnNodes == null) {
