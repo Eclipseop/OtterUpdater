@@ -5,6 +5,7 @@ import com.eclipseop.updater.analyzers.Analyzer;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.FieldInsnNode;
 
+import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.Arrays;
 
@@ -34,7 +35,7 @@ public class DoublyNode extends Analyzer {
 	public void findHooks(ClassNode classNode) {
 		final String[] temp = {null};
 
-		Arrays.stream(classNode.methods.get(1).instructions.toArray())
+		Arrays.stream(classNode.methods.stream().filter(p -> !Modifier.isStatic(p.access)).findFirst().get().instructions.toArray())
 				.filter(p -> p instanceof FieldInsnNode)
 				.forEach(c -> {
 					final FieldInsnNode node = (FieldInsnNode) c;
