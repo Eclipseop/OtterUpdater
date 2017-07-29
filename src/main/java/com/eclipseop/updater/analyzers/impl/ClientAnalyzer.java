@@ -31,9 +31,10 @@ public class ClientAnalyzer extends Analyzer {
 	public void findHooks(ClassNode classNode) {
 		final String playerName = Bootstrap.getBuilder().findByName("Player").getClassObsName();
 
-		final List<MethodNode> methodList = getClassNodes().stream().filter(p -> p.name.equals("client")).findFirst().get().methods.stream().filter(p -> p.desc.equals("(I)V")).collect(Collectors.toList());
+		final List<MethodNode> methodList =
+				getClassNodes().stream().filter(p -> p.name.equals("client")).findFirst().get().methods.stream().filter(p -> p.desc.equals("()V")).collect(Collectors.toList()); // TODO: 7/29/2017 filter more
 		for (MethodNode methodNode : methodList) {
-			final List<List<AbstractInsnNode>> abstractInsnNodes = Mask.findAll(methodNode, Mask.LDC, Mask.LDC, Mask.INVOKESPECIAL,Mask.LDC, Mask.PUTSTATIC);
+			final List<List<AbstractInsnNode>> abstractInsnNodes = Mask.findAll(methodNode, Mask.LDC, Mask.LDC, Mask.INVOKEVIRTUAL, Mask.LDC, Mask.PUTSTATIC);
 			if (abstractInsnNodes == null) {
 				continue;
 			}
@@ -41,10 +42,10 @@ public class ClientAnalyzer extends Analyzer {
 				boolean cool = false;
 				for (AbstractInsnNode ain : abstractInsnNode) {
 					if (ain instanceof LdcInsnNode) {
-						if (((LdcInsnNode) ain).cst instanceof String)
-							if (((String) ((LdcInsnNode) ain).cst).contains("js5crc")) {
-								cool = true;
-							}
+						final Object ob = ((LdcInsnNode) ain).cst;
+						if (ob instanceof String && ob.equals("js5crc")) {
+							cool = true;
+						}
 					}
 				}
 
