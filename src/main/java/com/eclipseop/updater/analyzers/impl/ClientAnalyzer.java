@@ -3,6 +3,7 @@ package com.eclipseop.updater.analyzers.impl;
 import com.eclipseop.updater.Bootstrap;
 import com.eclipseop.updater.analyzers.Analyzer;
 import com.eclipseop.updater.util.Mask;
+import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.*;
 
 import java.util.ArrayList;
@@ -22,7 +23,7 @@ public class ClientAnalyzer extends Analyzer {
 				.findFirst()
 				.ifPresent(c -> {
 					classNode[0] = c;
-					Bootstrap.getBuilder().addClass(c.name, "players", "localPlayer", "npcs", "clanMates", "interfaces", "gamestate", "energy").putName("OtterUpdater", "Client");
+					Bootstrap.getBuilder().addClass(c.name, "players", "localPlayer", "npcs", "clanMates", "interfaces", "gamestate", "energy", "username").putName("OtterUpdater", "Client");
 				});
 		return classNode[0];
 	}
@@ -30,6 +31,72 @@ public class ClientAnalyzer extends Analyzer {
 	@Override
 	public void findHooks(ClassNode classNode) {
 		final String playerName = Bootstrap.getBuilder().findByName("Player").getClassObsName();
+
+		//System.out.println(("(L" + Bootstrap.getBuilder().findByName("GameEngine").getClassObsName()));
+		/*
+		final List<MethodNode> passwordMethods =
+				classNode.methods.stream().filter(p -> p.access == Opcodes.ACC_STATIC && p.desc.contains("(L" + Bootstrap.getBuilder().findByName("GameEngine").getClassObsName())).collect(Collectors.toList());
+		*/
+
+
+		getClassNodes().stream().map(m -> m.methods).forEach(m -> {
+			final List<MethodNode> passwordMethods = m.stream().filter(p -> p.access == Opcodes.ACC_STATIC && p.desc.startsWith("(L" + Bootstrap.getBuilder().findByName("GameEngine").getClassObsName() + ";")).collect(Collectors.toList());
+			for (MethodNode methodNode : passwordMethods) {
+				//System.out.println(methodNode.owner + "." + methodNode.name + "()");
+				final List<List<AbstractInsnNode>> all = Mask.findAll(methodNode, Mask.GETSTATIC.describe("Ljava/lang/String;"), Mask.INVOKEVIRTUAL.describe("()Ljava/lang/String;"), Mask.IFNE);
+				if (all == null) {
+					continue;
+				}
+				for (List<AbstractInsnNode> abstractInsnNodes : all) {
+					for (AbstractInsnNode ain : abstractInsnNodes) {
+						if (ain instanceof FieldInsnNode) {
+							if (((FieldInsnNode) ain).owner.equals(methodNode.owner.name)) {
+								//System.out.println(((FieldInsnNode) ain).owner + "." + ((FieldInsnNode) ain).name);
+								Bootstrap.getBuilder().addField(classNode.name, ((FieldInsnNode) ain).name).putStatic(((FieldInsnNode) ain).owner).putName("OtterUpdater", "username");
+							}
+							//}
+							//Bootstrap.getBuilder().addField(classNode.name, ((FieldInsnNode) ain).name).putStatic(((FieldInsnNode) ain).owner).putName("OtterUpdater", "password");
+						}
+					}
+				}
+			}
+		});
+
+
+		/*
+		System.out.println(passwordMethods.size());
+		for (MethodNode methodNode : passwordMethods) {
+			//System.out.println(methodNode.desc);
+			final List<List<AbstractInsnNode>> all = Mask.findAll(methodNode, Mask.LDC.cst(""), Mask.PUTSTATIC);
+			if (all == null) {
+				continue;
+			}
+			for (List<AbstractInsnNode> abstractInsnNodes : all) {
+				for (AbstractInsnNode ain : abstractInsnNodes) {
+					if (ain instanceof FieldInsnNode) {
+						System.out.println(((FieldInsnNode) ain).owner + "." + ((FieldInsnNode) ain).name);
+					}
+				}
+			}
+		}
+		*/
+
+		/*
+		getClassNodes().forEach(node -> {
+			node.methods.forEach(method -> {
+				Arrays.stream(method.instructions.toArray()).forEach(ain -> {
+					if (ain instanceof FieldInsnNode) {
+						if (((FieldInsnNode) ain).owner.equals("cu") && ((FieldInsnNode) ain).name.equals("ac")) {
+							System.out.println(node.name + "." + method.name + "()");
+						}
+					}
+				});
+			});
+		});
+		*/
+
+		//AbstractSyntaxTree.find(getClassNodes(), )
+
 
 		final List<MethodNode> gamestateMethods =
 				classNode.methods.stream().filter(p -> p.access == 0 && p.desc.equals("()V")).collect(Collectors.toList());
