@@ -20,8 +20,7 @@ public class RuneScriptAnalyzer extends Analyzer {
 				.filter(p -> p.fieldCount("I", true) == 4)
 				.filter(p -> p.fieldCount("[I", true) == 2)
 				.filter(p -> p.fieldCount("[Ljava/lang/String;", true) == 1)
-				.findFirst()
-				.ifPresent(c -> {
+				.forEach(c -> {
 					classNode[0] = c;
 					Bootstrap.getBuilder().addClass(c.name).putName("OtterUpdater", "RuneScript");
 				});

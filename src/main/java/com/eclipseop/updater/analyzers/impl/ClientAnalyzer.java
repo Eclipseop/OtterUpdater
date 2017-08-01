@@ -20,8 +20,7 @@ public class ClientAnalyzer extends Analyzer {
 		final ClassNode[] classNode = new ClassNode[1];
 		classNodes.stream()
 				.filter(p -> p.name.equals("client"))
-				.findFirst()
-				.ifPresent(c -> {
+				.forEach(c -> {
 					classNode[0] = c;
 					Bootstrap.getBuilder().addClass(c.name, "players", "localPlayer", "npcs", "clanMates", "interfaces", "gamestate", "energy", "username").putName("OtterUpdater", "Client");
 				});

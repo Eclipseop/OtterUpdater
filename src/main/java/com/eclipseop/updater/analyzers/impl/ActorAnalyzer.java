@@ -25,8 +25,7 @@ public class ActorAnalyzer extends Analyzer {
 		classNodes.stream()
 				.filter(p -> p.superName.equals(Bootstrap.getBuilder().findByName("Entity").getClassObsName()))
 				.filter(p -> Modifier.isAbstract(p.access))
-				.findFirst()
-				.ifPresent(c -> {
+				.forEach(c -> {
 					classNode[0] = c;
 					Bootstrap.getBuilder().addClass(c.name, "strictX", "strictY", "hitsplatCount", "animation").putName("OtterUpdater", "Actor");
 				});

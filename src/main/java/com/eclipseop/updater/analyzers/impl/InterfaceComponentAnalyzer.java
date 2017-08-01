@@ -22,8 +22,7 @@ public class InterfaceComponentAnalyzer extends Analyzer {
 		classNodes.stream()
 				.filter(p -> p.superName.equals(Bootstrap.getBuilder().findByName("Node").getClassObsName()))
 				.filter(p -> p.fieldCount("[Ljava/lang/Object;", true) > 10)
-				.findFirst()
-				.ifPresent(c -> {
+				.forEach(c -> {
 					classNode[0] = c;
 					Bootstrap.getBuilder().addClass(c.name, "components", "parent", "text").putName("OtterUpdater", "InterfaceComponent");
 				});

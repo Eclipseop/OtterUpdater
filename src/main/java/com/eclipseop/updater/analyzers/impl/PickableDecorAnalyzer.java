@@ -17,8 +17,7 @@ public class PickableDecorAnalyzer extends Analyzer { //the stack on the ground
 
 		classNodes.stream()
 				.filter(p -> p.fieldCount("L" + Bootstrap.getBuilder().findByName("Entity").getClassObsName() + ";") == 3)
-				.findFirst()
-				.ifPresent(c -> {
+				.forEach(c -> {
 					classNode[0] = c;
 					Bootstrap.getBuilder().addClass(c.name).putName("OtterUpdater", "PickableDecor");
 				});

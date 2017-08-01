@@ -19,10 +19,9 @@ public class EntityAnalyzer extends Analyzer {
 		classNodes.stream()
 				.filter(p -> p.superName.equals(Bootstrap.getBuilder().findByName("DoublyNode").getClassObsName()))
 				.filter(p -> Modifier.isAbstract(p.access))
-				.findFirst()
-				.ifPresent(c -> {
-					Bootstrap.getBuilder().addClass(c.name, "height").putName("OtterUpdater", "Entity");
+				.forEach(c -> {
 					classNode[0] = c;
+					Bootstrap.getBuilder().addClass(c.name, "height").putName("OtterUpdater", "Entity");
 				});
 		return classNode[0];
 	}

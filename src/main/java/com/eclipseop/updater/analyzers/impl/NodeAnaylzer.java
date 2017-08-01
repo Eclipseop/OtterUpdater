@@ -15,14 +15,16 @@ public class NodeAnaylzer extends Analyzer {
 
 	@Override
 	public ClassNode findClassNode(ArrayList<ClassNode> classNodes) {
-		final ClassNode[] node = new ClassNode[1];
-		classNodes.stream().forEach(c -> {
-			if (c.fieldCount("J", true) == 1 && c.fieldCount("L" + c.name + ";") == 2) {
-				node[0] = c;
-				Bootstrap.getBuilder().addClass(c.name, "key", "next", "previous").putName("OtterUpdater", "Node");
-			}
-		});
-		return node[0];
+		final ClassNode[] classNode = new ClassNode[1];
+
+		classNodes.stream()
+				.filter(p -> p.fieldCount("J", true) == 1 && p.fieldCount("L" + p.name + ";", true) == 2)
+				.forEach(c -> {
+					classNode[0] = c;
+					Bootstrap.getBuilder().addClass(c.name, "key", "next", "previous").putName("OtterUpdater", "Node");
+				});
+
+		return classNode[0];
 	}
 
 	@Override

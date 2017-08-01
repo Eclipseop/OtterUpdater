@@ -19,8 +19,7 @@ public class PlayerAnalyzer extends Analyzer {
 		classNodes.stream()
 				.filter(p -> p.superName.equals(Bootstrap.getBuilder().findByName("Actor").getClassObsName()))
 				.filter(p -> p.fields.size() > 5)
-				.findFirst()
-				.ifPresent(c -> {
+				.forEach(c -> {
 					classNode[0] = c;
 					Bootstrap.getBuilder().addClass(c.name, "name", "actions").putName("OtterUpdater", "Player");
 				});

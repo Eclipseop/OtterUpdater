@@ -22,10 +22,9 @@ public class DoublyNode extends Analyzer {
 		classNodes.stream()
 				.filter(p -> p.superName.equals(Bootstrap.getBuilder().findByName("Node").getClassObsName()))
 				.filter(p -> p.fieldCount("L" + p.name + ";", true) == 2)
-				.findFirst()
-				.ifPresent(c -> {
-					Bootstrap.getBuilder().addClass(c.name, "previous", "next").putName("OtterUpdater", "DoublyNode");
+				.forEach(c -> {
 					classNode[0] = c;
+					Bootstrap.getBuilder().addClass(c.name, "previous", "next").putName("OtterUpdater", "DoublyNode");
 				});
 
 		return classNode[0];

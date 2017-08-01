@@ -19,8 +19,7 @@ public class SceneGraphAnalyzer extends Analyzer {
 		classNodes.stream()
 				.filter(p -> p.fieldCount("[[[I", true) == 2)
 				.filter(p -> p.fieldCount("[[I", true) == 2)
-				.findFirst()
-				.ifPresent(c -> {
+				.forEach(c -> {
 					classNode[0] = c;
 					Bootstrap.getBuilder().addClass(c.name, "tiles").putName("OtterUpdater", "SceneGraph");
 				});

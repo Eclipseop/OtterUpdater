@@ -19,8 +19,7 @@ public class ClanMateAnalyzer extends Analyzer {
 		classNodes.stream()
 				.filter(p -> p.superName.equals(Bootstrap.getBuilder().findByName("Node").getClassObsName()))
 				.filter(p -> p.fieldCount("B", true) == 1)
-				.findFirst()
-				.ifPresent(c -> {
+				.forEach(c -> {
 					classNode[0] = c;
 					Bootstrap.getBuilder().addClass(c.name, "world", "rank", "name").putName("OtterUpdater", "ClanMate");
 				});

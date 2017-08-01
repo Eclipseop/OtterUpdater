@@ -19,8 +19,7 @@ public class NpcAnalyzer extends Analyzer {
 		classNodes.stream()
 				.filter(p -> p.superName.equals(Bootstrap.getBuilder().findByName("Actor").getClassObsName()))
 				.filter(p -> p.getFieldTypeCount(true) == 1)
-				.findFirst()
-				.ifPresent(c -> {
+				.forEach(c -> {
 					classNode[0] = c;
 					Bootstrap.getBuilder().addClass(c.name, "definition").putName("OtterUpdater", "Npc");
 				});

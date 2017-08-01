@@ -16,10 +16,12 @@ public class GameEngineAnalyzer extends Analyzer {
 	public ClassNode findClassNode(ArrayList<ClassNode> classNodes) {
 		final ClassNode[] classNode = new ClassNode[1];
 
-		classNodes.stream().filter(p -> p.superName.contains("applet")).findFirst().ifPresent(c -> {
-			classNode[0] = c;
-			Bootstrap.getBuilder().addClass(c.name, "canvas").putName("OtterUpdater", "GameEngine");
-		});
+		classNodes.stream()
+				.filter(p -> p.superName.contains("applet"))
+				.forEach(c -> {
+					classNode[0] = c;
+					Bootstrap.getBuilder().addClass(c.name, "canvas").putName("OtterUpdater", "GameEngine");
+				});
 		return classNode[0];
 	}
 

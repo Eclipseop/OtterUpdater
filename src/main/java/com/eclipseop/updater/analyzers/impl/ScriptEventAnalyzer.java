@@ -19,12 +19,10 @@ public class ScriptEventAnalyzer extends Analyzer {
 				.filter(p -> p.superName.equals(Bootstrap.getBuilder().findByName("Node").getClassObsName()))
 				.filter(p -> p.fieldCount("[Ljava/lang/Object;", true) == 1)
 				.filter(p -> p.fieldCount("I", true) == 6)
-				.findFirst()
-				.ifPresent(c -> {
+				.forEach(c -> {
 					classNode[0] = c;
 					Bootstrap.getBuilder().addClass(c.name, "args").putName("OtterUpdater", "ScriptEvent");
 				});
-
 
 		return classNode[0];
 	}

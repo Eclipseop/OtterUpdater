@@ -22,8 +22,7 @@ public class PickableNodeAnalyzer extends Analyzer { //the actual item
 				.filter(p -> p.superName.equals(Bootstrap.getBuilder().findByName("Entity").getClassObsName()))
 				.filter(p -> Modifier.isFinal(p.access))
 				.filter(p -> p.fieldCount("I", true) == 2)
-				.findFirst()
-				.ifPresent(c -> {
+				.forEach(c -> {
 					classNode[0] = c;
 					Bootstrap.getBuilder().addClass(c.name, "id", "stackSize").putName("OtterUpdater", "PickableNode");
 				});

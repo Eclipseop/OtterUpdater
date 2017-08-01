@@ -24,8 +24,7 @@ public class NpcDefinitionAnalyzer extends Analyzer {
 		classNodes.stream()
 				.filter(p -> p.superName.equals(Bootstrap.getBuilder().findByName("DoublyNode").getClassObsName()))
 				.filter(p -> p.fieldCount("I", true) == 18)
-				.findFirst()
-				.ifPresent(c -> {
+				.forEach(c -> {
 					classNode[0] = c;
 					Bootstrap.getBuilder().addClass(c.name, "name", "actions", "id").putName("OtterUpdater", "NpcDefinition");
 				});

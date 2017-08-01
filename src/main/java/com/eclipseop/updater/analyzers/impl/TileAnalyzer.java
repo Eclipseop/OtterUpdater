@@ -25,8 +25,7 @@ public class TileAnalyzer extends Analyzer {
 				.filter(p -> Modifier.isFinal(p.access))
 				.filter(p -> p.superName.equals(Bootstrap.getBuilder().findByName("Node").getClassObsName()))
 				.filter(p -> p.methods.stream().filter(m -> m.name.equals("<init>")).findFirst().orElse(null).desc.contains("III"))
-				.findFirst()
-				.ifPresent(c -> {
+				.forEach(c -> {
 					classNode[0] = c;
 					Bootstrap.getBuilder().addClass(c.name, "pickableDecor", "strictX", "strictY", "plane").putName("OtterUpdater", "Tile");
 				});

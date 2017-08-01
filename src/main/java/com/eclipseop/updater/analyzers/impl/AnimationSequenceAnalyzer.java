@@ -18,8 +18,7 @@ public class AnimationSequenceAnalyzer extends Analyzer {
 		classNodes.stream()
 				.filter(p -> p.superName.equals(Bootstrap.getBuilder().findByName("DoublyNode").getClassObsName()))
 				.filter(p -> p.fieldCount("[I", true) == 5)
-				.findFirst()
-				.ifPresent(c -> {
+				.forEach(c -> {
 					classNode[0] = c;
 					Bootstrap.getBuilder().addClass(c.name).putName("OtterUpdater", "AnimationSequence");
 				});
