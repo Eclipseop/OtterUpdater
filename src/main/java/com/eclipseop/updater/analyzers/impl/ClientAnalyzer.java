@@ -22,7 +22,7 @@ public class ClientAnalyzer extends Analyzer {
 				.filter(p -> p.name.equals("client"))
 				.forEach(c -> {
 					classNode[0] = c;
-					Bootstrap.getBuilder().addClass(c.name, "players", "localPlayer", "npcs", "clanMates", "interfaces", "gamestate", "energy", "username").putName("OtterUpdater", "Client");
+					Bootstrap.getBuilder().addClass(c.name, "players", "localPlayer", "npcs", "clanMates", "interfaces", "gamestate", "energy", "username", "grandExchangeOffers").putName("OtterUpdater", "Client");
 				});
 		return classNode[0];
 	}
@@ -159,6 +159,8 @@ public class ClientAnalyzer extends Analyzer {
 					Bootstrap.getBuilder().addField(classNode.name, field.name).putName("OtterUpdater", "clanMates").putStatic(node.name);
 				} else if (desc.equals("[[L" + Bootstrap.getBuilder().findByName("InterfaceComponent").getClassObsName() + ";")) {
 					Bootstrap.getBuilder().addField(classNode.name, field.name).putName("OtterUpdater", "interfaces").putStatic(node.name);
+				} else if (desc.equals("[L" + Bootstrap.getBuilder().findByName("GrandExchangeOffer").getClassObsName() + ";")) {
+					Bootstrap.getBuilder().addField(classNode.name, field.name).putName("OtterUpdater", "grandExchangeOffers");
 				}
 			});
 		});

@@ -47,10 +47,10 @@ public class Bootstrap {
 		analyzers.add(new RuneScriptAnalyzer());
 		analyzers.add(new ScriptEventAnalyzer());
 		analyzers.add(new InterfaceComponentAnalyzer());
-		analyzers.add(new ClientAnalyzer());
 		analyzers.add(new FontAnalyzer());
 		analyzers.add(new BufferAnalyzer());
 		analyzers.add(new GrandExchangeOffer());
+		analyzers.add(new ClientAnalyzer());
 	}
 
 	private static void findMultipliers(final List<Expression> list) {
