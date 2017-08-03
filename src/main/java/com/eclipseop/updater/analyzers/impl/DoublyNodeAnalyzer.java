@@ -14,40 +14,39 @@ import java.util.ArrayList;
 
 /**
  * Created by Eclipseop.
- * Date: 7/24/2017.
+ * Date: 7/1/2017.
  */
-public class PickableNodeAnalyzer extends Analyzer { //the actual item
+public class DoublyNodeAnalyzer extends Analyzer {
 
 	@Override
 	public FoundClass identifyClass(ArrayList<ClassNode> classNodes) {
 		for (ClassNode classNode : classNodes) {
-			if (classNode.superName.equals(FoundUtil.findClass("Entity").getRef().name))  {
-				if (classNode.fieldCount("I", true) == 2) {
-					return new FoundClass(classNode, "PickableNode").addExpectedField("name", "stackSize");
-				}
+			if (classNode.superName.equals(FoundUtil.findClass("Node").getRef().name) &&
+					classNode.fieldCount(classNode.getWrappedName(), true) == 2) {
+				return new FoundClass(classNode, "DoublyNode").addExpectedField("next", "previous");
 			}
 		}
-
 		return null;
 	}
 
 	@Override
 	public void findHooks(FoundClass foundClass) {
+		String temp = null;
 		for (MethodNode method : foundClass.getRef().methods) {
-			if (method.name.equals("<init>") || Modifier.isStatic(method.access)) {
+			if (Modifier.isStatic(method.access)) {
 				continue;
 			}
 
-			boolean foundName = false;
 			for (AbstractInsnNode ain : method.instructions.toArray()) {
 				if (ain instanceof FieldInsnNode) {
 					final FieldInsnNode fin = (FieldInsnNode) ain;
 
-					if (!foundName) {
-						foundClass.addFields(new FoundField(foundClass.findField(fin), "name"));
-						foundName = true;
-					} else {
-						foundClass.addFields(new FoundField(foundClass.findField(fin), "stackSize"));
+					if (temp == null) {
+						foundClass.addFields(new FoundField(foundClass.findField(fin), "previous"));
+						temp = fin.name;
+					} else if (!temp.equals(fin.name)) {
+						foundClass.addFields(new FoundField(foundClass.findField(fin), "next"));
+						break;
 					}
 				}
 			}

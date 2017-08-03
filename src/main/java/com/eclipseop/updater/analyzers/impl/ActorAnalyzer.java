@@ -1,15 +1,17 @@
 package com.eclipseop.updater.analyzers.impl;
 
-import com.eclipseop.updater.Bootstrap;
 import com.eclipseop.updater.analyzers.Analyzer;
-import com.eclipseop.updater.util.Mask;
-import org.objectweb.asm.tree.AbstractInsnNode;
-import org.objectweb.asm.tree.ClassNode;
-import org.objectweb.asm.tree.FieldInsnNode;
+import com.eclipseop.updater.util.found_shit.FoundClass;
+import com.eclipseop.updater.util.found_shit.FoundField;
+import com.eclipseop.updater.util.found_shit.FoundUtil;
+import com.eclipseop.updater.util.ast.AbstractSyntaxTree;
+import com.eclipseop.updater.util.ast.expression.Expression;
+import com.eclipseop.updater.util.ast.expression.impl.*;
+import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.tree.*;
 
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -19,70 +21,84 @@ import java.util.List;
 public class ActorAnalyzer extends Analyzer {
 
 	@Override
-	public ClassNode findClassNode(ArrayList<ClassNode> classNodes) {
-		final ClassNode[] classNode = new ClassNode[1];
+	public FoundClass identifyClass(ArrayList<ClassNode> classNodes) {
+		for (ClassNode classNode : classNodes) {
+			if (classNode.superName.equals(FoundUtil.findClass("Entity").getRef().name)) {
+				if (Modifier.isAbstract(classNode.access)) {
+					return new FoundClass(classNode, "Actor").addExpectedField("hitsplatCount").addExpectedField("strictX", "strictY", "animation");
+				}
+			}
+		}
 
-		classNodes.stream()
-				.filter(p -> p.superName.equals(Bootstrap.getBuilder().findByName("Entity").getClassObsName()))
-				.filter(p -> Modifier.isAbstract(p.access))
-				.forEach(c -> {
-					classNode[0] = c;
-					Bootstrap.getBuilder().addClass(c.name, "strictX", "strictY", "hitsplatCount", "animation").putName("OtterUpdater", "Actor");
-				});
-
-		return classNode[0];
+		return null;
 	}
 
 	@Override
-	public void findHooks(ClassNode classNode) {
-		classNode.fields.stream().filter(p -> !Modifier.isStatic(p.access)).forEach(c -> {
-			if (c.desc.equals("[B")) {
-				Bootstrap.getBuilder().addField(classNode.name, c.name).putName("OtterUpdater", "hitsplatCount");
+	public void findHooks(FoundClass foundClass) {
+		for (FieldNode field : foundClass.getRef().fields) {
+			if (Modifier.isStatic(field.access)) {
+				continue;
 			}
-		}); //hitsplat
 
-		getClassNodes().stream().forEach(node -> {
-			node.methods.stream()
-					.filter(p -> p.desc.startsWith("(L" + classNode.name + ";I") && p.desc.endsWith(")V"))
-					.filter(p -> Modifier.isFinal(p.access) && Modifier.isStatic(p.access))
-					.filter(p -> Arrays.stream(p.instructions.toArray()).filter(p1 -> p1 instanceof FieldInsnNode).count() == 2)
-					.findFirst()
-					.ifPresent(c -> {
-						String name = null;
-						for (AbstractInsnNode abstractInsnNode : c.instructions.toArray()) {
-							if (abstractInsnNode instanceof FieldInsnNode) {
-								if (name == null) {
-									name = "strictX";
-								} else {
-									name = "strictY";
+			if (field.desc.equals("[B")) {
+				foundClass.addFields(new FoundField(field, "hitsplatCount"));
+			}
+		}
+
+		boolean xFound = false;
+		position:
+		for (ClassNode classNode : getClassNodes()) {
+			for (MethodNode method : classNode.methods) {
+				if (method.desc.startsWith("(" + foundClass.getRef().getWrappedName()) && method.desc.endsWith(")V")) {
+					if (Modifier.isFinal(method.access) && Modifier.isStatic(method.access)) {
+						if (method.count(Opcodes.GETFIELD) == 2) {
+							for (AbstractInsnNode ain : method.instructions.toArray()) {
+								if (ain instanceof FieldInsnNode) {
+									final FieldInsnNode fin = (FieldInsnNode) ain;
+									if (!xFound) {
+										foundClass.addFields(new FoundField(foundClass.findField(fin), "strictX"));
+										xFound = true;
+									} else {
+										foundClass.addFields(new FoundField(foundClass.findField(fin), "strictY"));
+									}
 								}
+							}
+							break position;
+						}
+					}
+				}
+			}
+		}
 
-								Bootstrap.getBuilder().addField(classNode.name, ((FieldInsnNode) abstractInsnNode).name).putName("OtterUpdater", name);
+		animation:
+		for (ClassNode classNode : getClassNodes()) {
+			for (MethodNode method : classNode.methods) {
+				if (method.access != 24) { //static final
+					continue;
+				}
+				if (method.desc.startsWith("(" + FoundUtil.findClass("Actor").getRef().getWrappedName())) {
+					final List<Expression> expressions = AbstractSyntaxTree.find(method, Opcodes.IF_ICMPEQ);
+
+					if (expressions.stream().filter(p -> ((ConditionExpression) p).isExpectedExpressions(MathExpression.class, IntegerExpression.class)).count() != 1) {
+						continue;
+					}
+					for (Expression expression : expressions) {
+						final ConditionExpression ce = (ConditionExpression) expression;
+						if (ce.isExpectedExpressions(MathExpression.class, IntegerExpression.class)) {
+							if (((IntegerExpression) ce.find(IntegerExpression.class)).getOperand() != -1) {
+								continue;
+							}
+
+							final MathExpression me = (MathExpression) ce.find(MathExpression.class);
+							if (me.isExpectedExpressions(InstanceExpression.class, VarExpression.class)) {
+								final InstanceExpression ie = (InstanceExpression) me.find(InstanceExpression.class);
+								foundClass.addFields(new FoundField(FoundUtil.findField(ie.getFieldName()), "animation"));
+								break animation;
 							}
 						}
-					});
-		}); //x/y
-
-		getClassNodes().forEach(node -> {
-			node.methods.stream()
-					.filter(p -> p.desc.contains(Bootstrap.getBuilder().findByName("Actor").getClassObsName()))
-					.findFirst()
-					.ifPresent(method -> {
-						final List<AbstractInsnNode> i =
-								Mask.find(
-										method,
-										Mask.GETFIELD.describe("I"),
-										Mask.LDC.distance(1),
-										Mask.INVOKESTATIC.describe("L" + Bootstrap.getBuilder().findByName("AnimationSequence").getClassObsName() + ";", true).distance(5)
-								);
-						if (i != null) {
-							i.stream().filter(p -> p instanceof FieldInsnNode).findFirst().ifPresent(c -> {
-								Bootstrap.getBuilder().addField(classNode.name, ((FieldInsnNode) c).name).putName("OtterUpdater", "animation");
-							});
-						}
-					});
-
-
-		}); //animation
+					}
+				}
+			}
+		}
 	}
 }

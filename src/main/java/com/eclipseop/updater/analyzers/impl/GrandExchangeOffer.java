@@ -1,7 +1,7 @@
 package com.eclipseop.updater.analyzers.impl;
 
-import com.eclipseop.updater.Bootstrap;
 import com.eclipseop.updater.analyzers.Analyzer;
+import com.eclipseop.updater.util.found_shit.FoundClass;
 import org.objectweb.asm.tree.ClassNode;
 
 import java.util.ArrayList;
@@ -11,23 +11,20 @@ import java.util.ArrayList;
  * Date: 8/1/2017.
  */
 public class GrandExchangeOffer extends Analyzer {
+
 	@Override
-	public ClassNode findClassNode(ArrayList<ClassNode> classNodes) {
-		final ClassNode[] classNode = new ClassNode[1];
+	public FoundClass identifyClass(ArrayList<ClassNode> classNodes) {
+		for (ClassNode classNode : classNodes) {
+			if (classNode.fieldCount("B", true) == 1 && classNode.fieldCount("I", true) == 5) {
+				return new FoundClass(classNode, "GrandExchangeOffer");
+			}
+		}
 
-		classNodes.stream()
-				.filter(p -> p.fieldCount("B", true) == 1)
-				.filter(p -> p.fieldCount("I", true) == 5)
-				.forEach(c -> {
-					classNode[0] = c;
-					Bootstrap.getBuilder().addClass(c.name).putName("OtterUpdater", "GrandExchangeOffer");
-				});
-
-		return classNode[0];
+		return null;
 	}
 
 	@Override
-	public void findHooks(ClassNode classNode) {
+	public void findHooks(FoundClass foundClass) {
 
 	}
 }

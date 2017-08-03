@@ -1,12 +1,13 @@
 package com.eclipseop.updater.util.ast.expression.impl;
 
 import com.eclipseop.updater.util.ast.expression.Expression;
+import com.eclipseop.updater.util.ast.expression.Tree;
 
 /**
  * Created by Eclipseop.
  * Date: 7/28/2017.
  */
-public class ConditionExpression extends Expression {
+public class ConditionExpression extends Expression implements Tree {
 
 	private Expression left;
 	private Expression right;
@@ -18,10 +19,12 @@ public class ConditionExpression extends Expression {
 		this.operation = operation;
 	}
 
+	@Override
 	public Expression getRight() {
 		return right;
 	}
 
+	@Override
 	public Expression getLeft() {
 		return left;
 	}

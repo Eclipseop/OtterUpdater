@@ -29,20 +29,10 @@
  */
 package org.objectweb.asm.tree;
 
-import java.lang.reflect.Modifier;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import org.objectweb.asm.*;
 
-import org.objectweb.asm.AnnotationVisitor;
-import org.objectweb.asm.Attribute;
-import org.objectweb.asm.ClassVisitor;
-import org.objectweb.asm.FieldVisitor;
-import org.objectweb.asm.MethodVisitor;
-import org.objectweb.asm.Opcodes;
-import org.objectweb.asm.TypePath;
+import java.lang.reflect.Modifier;
+import java.util.*;
 
 /**
  * A node that represents a class.
@@ -572,5 +562,9 @@ public class ClassNode extends ClassVisitor {
 	@Override
 	public String toString(){
 		return name;
+	}
+
+	public String getWrappedName() {
+		return "L" + name + ";";
 	}
 }

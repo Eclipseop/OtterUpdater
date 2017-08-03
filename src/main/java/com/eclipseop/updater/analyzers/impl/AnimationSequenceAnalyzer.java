@@ -1,7 +1,8 @@
 package com.eclipseop.updater.analyzers.impl;
 
-import com.eclipseop.updater.Bootstrap;
 import com.eclipseop.updater.analyzers.Analyzer;
+import com.eclipseop.updater.util.found_shit.FoundClass;
+import com.eclipseop.updater.util.found_shit.FoundUtil;
 import org.objectweb.asm.tree.ClassNode;
 
 import java.util.ArrayList;
@@ -11,23 +12,22 @@ import java.util.ArrayList;
  * Date: 7/23/2017.
  */
 public class AnimationSequenceAnalyzer extends Analyzer {
+	
 	@Override
-	public ClassNode findClassNode(ArrayList<ClassNode> classNodes) {
-		final ClassNode[] classNode = new ClassNode[1];
-
-		classNodes.stream()
-				.filter(p -> p.superName.equals(Bootstrap.getBuilder().findByName("DoublyNode").getClassObsName()))
-				.filter(p -> p.fieldCount("[I", true) == 5)
-				.forEach(c -> {
-					classNode[0] = c;
-					Bootstrap.getBuilder().addClass(c.name).putName("OtterUpdater", "AnimationSequence");
-				});
-
-		return classNode[0];
+	public FoundClass identifyClass(ArrayList<ClassNode> classNodes) {
+		for (ClassNode classNode : classNodes) {
+			if (classNode.superName.endsWith(FoundUtil.findClass("DoublyNode").getRef().name)) {
+				if (classNode.fieldCount("[I", true) == 5) {
+					return new FoundClass(classNode, "AnimationSequence");
+				}
+			}
+		}
+		
+		return null;
 	}
 
 	@Override
-	public void findHooks(ClassNode classNode) {
+	public void findHooks(FoundClass foundClass) {
 
 	}
 }

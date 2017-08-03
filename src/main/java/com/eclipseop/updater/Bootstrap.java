@@ -2,18 +2,18 @@ package com.eclipseop.updater;
 
 import com.eclipseop.updater.analyzers.Analyzer;
 import com.eclipseop.updater.analyzers.impl.*;
+import com.eclipseop.updater.util.found_shit.FoundUtil;
 import com.eclipseop.updater.util.JarUtil;
-import com.eclipseop.updater.util.ResultsBuilder;
 import com.eclipseop.updater.util.ast.AbstractSyntaxTree;
 import com.eclipseop.updater.util.ast.expression.Expression;
-import com.eclipseop.updater.util.ast.expression.impl.InstanceExpression;
-import com.eclipseop.updater.util.ast.expression.impl.MathExpression;
-import com.eclipseop.updater.util.ast.expression.impl.VarExpression;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.IntInsnNode;
 
-import java.util.*;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.jar.JarFile;
 
 /**
@@ -23,15 +23,23 @@ import java.util.jar.JarFile;
 public class Bootstrap {
 
 	private static final ArrayList<Analyzer> analyzers = new ArrayList<>();
-	private static final ResultsBuilder builder = new ResultsBuilder();
+	private static ArrayList<ClassNode> classNodes;
 
-	public static ResultsBuilder getBuilder() {
-		return builder;
+	static {
+		try {
+			classNodes = JarUtil.parseJar(new JarFile("C:\\Users\\eclip\\Desktop\\pepes\\gamepack\\150.jar"));
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+
+	public static ArrayList<ClassNode> getClassNodes() {
+		return classNodes;
 	}
 
 	private static void loadAnalyzers() {
-		analyzers.add(new NodeAnaylzer());
-		analyzers.add(new DoublyNode());
+		analyzers.add(new NodeAnalyzer());
+		analyzers.add(new DoublyNodeAnalyzer());
 		analyzers.add(new EntityAnalyzer());
 		analyzers.add(new PickableDecorAnalyzer());
 		analyzers.add(new PickableNodeAnalyzer());
@@ -50,9 +58,11 @@ public class Bootstrap {
 		analyzers.add(new FontAnalyzer());
 		analyzers.add(new BufferAnalyzer());
 		analyzers.add(new GrandExchangeOffer());
+		analyzers.add(new MouseRecorderAnalyzer());
 		analyzers.add(new ClientAnalyzer());
 	}
 
+	/*
 	private static void findMultipliers(final List<Expression> list) {
 		final HashMap<String, ArrayList<Integer>> dankMap = new HashMap<>();
 
@@ -98,7 +108,12 @@ public class Bootstrap {
 		}
 
 		dankMap.keySet().forEach(c -> {
-			final ResultsBuilder.MappedEntity mappedEntity = builder.getFieldMap().get(c);
+			if (c.equals("bi.k")) {
+
+			}
+
+			//final ResultsBuilder.MappedEntity mappedEntity = builder.getFieldMap().get(c);
+			final ResultsBuilder.MappedEntity mappedEntity = builder.findField(c);
 
 			if (mappedEntity != null) {
 				mappedEntity.putMultiplier(String.valueOf(mostCommon(dankMap.get(c))));
@@ -132,6 +147,7 @@ public class Bootstrap {
 
 		return max.getKey();
 	}
+	*/
 
 	private static int getRevision(final ArrayList<ClassNode> classNodes) {
 		final int[] rev = new int[1];
@@ -149,8 +165,6 @@ public class Bootstrap {
 
 	public static void main(String[] args) {
 		try {
-			final ArrayList<ClassNode> classNodes = JarUtil.parseJar(new JarFile("C:\\Users\\eclip\\Desktop\\pepes\\gamepack\\150.jar"));
-
 			System.out.println("Running on revision " + getRevision(classNodes));
 
 			final long analyzerTime = System.currentTimeMillis();
@@ -161,14 +175,13 @@ public class Bootstrap {
 
 			final long multiTime = System.currentTimeMillis();
 			final List<Expression> ast = AbstractSyntaxTree.find(classNodes, Opcodes.IMUL);
-			findMultipliers(ast);
+			//findMultipliers(ast);
 			System.out.println("Collecting multipliers... " + ((double) (System.currentTimeMillis() - multiTime) / 1000) + "s");
 
 			System.out.println();
 
-			builder.prettyPrint();
+			FoundUtil.print();
 
-			//builder.print();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}

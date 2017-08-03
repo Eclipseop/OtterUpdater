@@ -1,11 +1,14 @@
 package com.eclipseop.updater.analyzers.impl;
 
-import com.eclipseop.updater.Bootstrap;
 import com.eclipseop.updater.analyzers.Analyzer;
+import com.eclipseop.updater.util.found_shit.FoundClass;
+import com.eclipseop.updater.util.found_shit.FoundField;
+import com.eclipseop.updater.util.found_shit.FoundUtil;
 import com.eclipseop.updater.util.Mask;
 import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.FieldInsnNode;
+import org.objectweb.asm.tree.FieldNode;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -15,37 +18,38 @@ import java.util.List;
  * Date: 7/24/2017.
  */
 public class InterfaceComponentAnalyzer extends Analyzer {
+
 	@Override
-	public ClassNode findClassNode(ArrayList<ClassNode> classNodes) {
-		final ClassNode[] classNode = new ClassNode[1];
+	public FoundClass identifyClass(ArrayList<ClassNode> classNodes) {
+		for (ClassNode classNode : classNodes) {
+			if (classNode.superName.equals(FoundUtil.findClass("Node").getRef().name)) {
+				if (classNode.fieldCount("[Ljava/lang/Object;", true) > 10) {
+					return new FoundClass(classNode, "InterfaceComponent").addExpectedField("components", "parent", "text");
+				}
+			}
+		}
 
-		classNodes.stream()
-				.filter(p -> p.superName.equals(Bootstrap.getBuilder().findByName("Node").getClassObsName()))
-				.filter(p -> p.fieldCount("[Ljava/lang/Object;", true) > 10)
-				.forEach(c -> {
-					classNode[0] = c;
-					Bootstrap.getBuilder().addClass(c.name, "components", "parent", "text").putName("OtterUpdater", "InterfaceComponent");
-				});
-
-
-		return classNode[0];
+		return null;
 	}
 
 	@Override
-	public void findHooks(ClassNode classNode) {
-		classNode.fields.stream().forEach(field -> {
-			if (field.desc.equals("[L" + classNode.name + ";")) {
-				Bootstrap.getBuilder().addField(classNode.name, field.name).putName("OtterUpdater", "components");
-			} else if (field.desc.equals("L" + classNode.name + ";")) {
-				Bootstrap.getBuilder().addField(classNode.name, field.name).putName("OtterUpdater", "parent");
+	public void findHooks(FoundClass foundClass) {
+		for (FieldNode fieldNode : foundClass.getRef().fields) {
+			if (fieldNode.desc.equals("[" + foundClass.getRef().getWrappedName())) {
+				foundClass.addFields(new FoundField(fieldNode, "components"));
+			} else if (fieldNode.desc.equals(foundClass.getRef().getWrappedName())) {
+				foundClass.addFields(new FoundField(fieldNode, "parent"));
 			}
-		});
+		}
 
-		final List<AbstractInsnNode> textMask = Mask.find(classNode, Mask.INVOKEVIRTUAL, Mask.PUTFIELD.own(classNode.name).describe("Ljava/lang/String;"));
+		final List<AbstractInsnNode> textMask = Mask.find(foundClass.getRef(), Mask.INVOKEVIRTUAL, Mask.PUTFIELD.own(foundClass.getRef().name).describe("Ljava/lang/String;"));
 		if (textMask != null) {
-			textMask.stream().filter(p -> p instanceof FieldInsnNode).findFirst().ifPresent(ain -> {
-				Bootstrap.getBuilder().addField(classNode.name, ((FieldInsnNode) ain).name).putName("OtterUpdater", "text");
-			});
+			for (AbstractInsnNode ain : textMask) {
+				if (ain instanceof FieldInsnNode) {
+					foundClass.addFields(new FoundField(foundClass.findField((FieldInsnNode) ain), "text"));
+					break;
+				}
+			}
 		}
 	}
 }

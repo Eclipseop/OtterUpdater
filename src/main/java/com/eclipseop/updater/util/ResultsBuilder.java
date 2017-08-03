@@ -113,10 +113,25 @@ public class ResultsBuilder {
 		}
 	}
 
-	public MappedEntity findByName(final String name) {
+	public MappedEntity findClass(final String name) {
 		return getClassMap().values().stream()
 				.filter(p -> p.getName("OtterUpdater").contains(name))
 				.findFirst().get();
+	}
+
+	public MappedEntity findField(final String field) {
+		for (String key : getFieldMap().keySet()) {
+			if (key.endsWith("." + field.split("\\.")[1])) {
+				if (key.equals(field)) {
+					return getFieldMap().get(key);
+				} else {
+					System.out.println(key + " - " + field);
+					//System.out.println("Static: " + field);
+				}
+			}
+		}
+
+		return null;
 	}
 
 	public static class MappedEntity {

@@ -1,5 +1,7 @@
 package com.eclipseop.updater.analyzers;
 
+import com.eclipseop.updater.util.found_shit.FoundClass;
+import com.eclipseop.updater.util.found_shit.FoundUtil;
 import org.objectweb.asm.tree.ClassNode;
 
 import java.util.ArrayList;
@@ -10,9 +12,9 @@ import java.util.ArrayList;
  */
 public abstract class Analyzer {
 
-	public abstract ClassNode findClassNode(final ArrayList<ClassNode> classNodes);
+	public abstract FoundClass identifyClass(final ArrayList<ClassNode> classNodes);
 
-	public abstract void findHooks(final ClassNode classNode);
+	public abstract void findHooks(final FoundClass foundClass);
 
 	private static ArrayList<ClassNode> classNodes;
 
@@ -25,12 +27,13 @@ public abstract class Analyzer {
 	}
 
 	public void run(){
-		final ClassNode found = findClassNode(classNodes);
-		if (found == null) {
+		final FoundClass foundClass = identifyClass(classNodes);
+		if (foundClass == null || foundClass.getRef() == null) {
 			System.out.println("Failed to find " + getClass().getSimpleName());
 			return;
 		}
+		FoundUtil.addClass(foundClass);
 
-		findHooks(found);
+		findHooks(foundClass);
 	}
 }

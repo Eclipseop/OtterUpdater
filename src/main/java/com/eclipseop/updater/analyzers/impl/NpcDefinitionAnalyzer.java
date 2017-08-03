@@ -1,11 +1,14 @@
 package com.eclipseop.updater.analyzers.impl;
 
-import com.eclipseop.updater.Bootstrap;
 import com.eclipseop.updater.analyzers.Analyzer;
+import com.eclipseop.updater.util.found_shit.FoundClass;
+import com.eclipseop.updater.util.found_shit.FoundField;
+import com.eclipseop.updater.util.found_shit.FoundUtil;
 import com.eclipseop.updater.util.Mask;
 import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.FieldInsnNode;
+import org.objectweb.asm.tree.FieldNode;
 
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
@@ -18,34 +21,37 @@ import java.util.List;
 public class NpcDefinitionAnalyzer extends Analyzer {
 
 	@Override
-	public ClassNode findClassNode(ArrayList<ClassNode> classNodes) {
-		final ClassNode[] classNode = new ClassNode[1];
+	public FoundClass identifyClass(ArrayList<ClassNode> classNodes) {
+		for (ClassNode classNode : classNodes) {
+			if (classNode.superName.equals(FoundUtil.findClass("DoublyNode").getRef().name)) {
+				if (classNode.fieldCount("I", true) == 18) {
+					return new FoundClass(classNode, "NpcDefinition").addExpectedField("name", "actions", "id");
+				}
+			}
+		}
 
-		classNodes.stream()
-				.filter(p -> p.superName.equals(Bootstrap.getBuilder().findByName("DoublyNode").getClassObsName()))
-				.filter(p -> p.fieldCount("I", true) == 18)
-				.forEach(c -> {
-					classNode[0] = c;
-					Bootstrap.getBuilder().addClass(c.name, "name", "actions", "id").putName("OtterUpdater", "NpcDefinition");
-				});
-
-		return classNode[0];
+		return null;
 	}
 
 	@Override
-	public void findHooks(ClassNode classNode) {
-		classNode.fields.stream().filter(p -> !Modifier.isStatic(p.access)).forEach(c -> {
-			if (c.desc.equals("Ljava/lang/String;")) {
-				Bootstrap.getBuilder().addField(classNode.name, c.name).putName("OtterUpdater", "name");
-			} else if (c.desc.equals("[Ljava/lang/String;")) {
-				Bootstrap.getBuilder().addField(classNode.name, c.name).putName("OtterUpdater", "actions");
+	public void findHooks(FoundClass foundClass) {
+		for (FieldNode fieldNode : foundClass.getRef().fields) {
+			if (!Modifier.isStatic(fieldNode.access)) {
+				if (fieldNode.desc.equals("Ljava/lang/String;")) {
+					foundClass.addFields(new FoundField(fieldNode, "name"));
+				} else if (fieldNode.desc.equals("[Ljava/lang/String;")) {
+					foundClass.addFields(new FoundField(fieldNode, "actions"));
+				}
 			}
-		});
+		}
 
-		final List<AbstractInsnNode> idMask = Mask.find(classNode, Mask.GETFIELD.describe("I"), Mask.I2L.distance(5));
-		idMask.stream().filter(p -> p instanceof FieldInsnNode).findFirst().ifPresent(ain -> {
-			Bootstrap.getBuilder().addField(classNode.name, ((FieldInsnNode)ain).name).putName("OtterUpdater", "id");
-		});
+		final List<AbstractInsnNode> idMask = Mask.find(foundClass.getRef(), Mask.GETFIELD.describe("I"), Mask.I2L.distance(5));
+		for (AbstractInsnNode p : idMask) {
+			if (p instanceof FieldInsnNode) {
+				foundClass.addFields(new FoundField(foundClass.findField((FieldInsnNode) p), "id"));
+				break;
+			}
+		}
 
 	}
 }

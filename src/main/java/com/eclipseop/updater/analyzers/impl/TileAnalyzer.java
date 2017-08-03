@@ -1,12 +1,11 @@
 package com.eclipseop.updater.analyzers.impl;
 
-import com.eclipseop.updater.Bootstrap;
 import com.eclipseop.updater.analyzers.Analyzer;
+import com.eclipseop.updater.util.found_shit.FoundClass;
+import com.eclipseop.updater.util.found_shit.FoundField;
+import com.eclipseop.updater.util.found_shit.FoundUtil;
 import com.eclipseop.updater.util.Mask;
-import org.objectweb.asm.tree.AbstractInsnNode;
-import org.objectweb.asm.tree.ClassNode;
-import org.objectweb.asm.tree.FieldInsnNode;
-import org.objectweb.asm.tree.VarInsnNode;
+import org.objectweb.asm.tree.*;
 
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
@@ -19,64 +18,62 @@ import java.util.List;
 public class TileAnalyzer extends Analyzer {
 
 	@Override
-	public ClassNode findClassNode(ArrayList<ClassNode> classNodes) {
-		final ClassNode[] classNode = new ClassNode[1];
-		classNodes.stream()
-				.filter(p -> Modifier.isFinal(p.access))
-				.filter(p -> p.superName.equals(Bootstrap.getBuilder().findByName("Node").getClassObsName()))
-				.filter(p -> p.methods.stream().filter(m -> m.name.equals("<init>")).findFirst().orElse(null).desc.contains("III"))
-				.forEach(c -> {
-					classNode[0] = c;
-					Bootstrap.getBuilder().addClass(c.name, "pickableDecor", "strictX", "strictY", "plane").putName("OtterUpdater", "Tile");
-				});
+	public FoundClass identifyClass(ArrayList<ClassNode> classNodes) {
+		for (ClassNode classNode : classNodes) {
+			if (Modifier.isFinal(classNode.access) && classNode.superName.equals(FoundUtil.findClass("Node").getRef().name)) {
+				for (MethodNode method : classNode.methods) {
+					if (method.name.equals("<init>") && method.desc.equals("(III)V")) {
+						return new FoundClass(classNode, "Tile").addExpectedField("pickableDecor", "strictX", "strictY", "plane");
+					}
+				}
+			}
+		}
 
-		return classNode[0];
+		return null;
 	}
 
 	@Override
-	public void findHooks(ClassNode classNode) {
-		classNode.fields.stream()
-				.filter(p -> p.desc.equals("L" + Bootstrap.getBuilder().findByName("PickableDecor").getClassObsName() + ";"))
-				.findFirst()
-				.ifPresent(c -> {
-					Bootstrap.getBuilder().addField(classNode.name, c.name).putName("OtterUpdater", "pickableDecor");
-				});
+	public void findHooks(FoundClass foundClass) {
+		for (FieldNode field : foundClass.getRef().fields) {
+			if (field.desc.equals(FoundUtil.findClass("PickableDecor").getRef().getWrappedName())) {
+				foundClass.addFields(new FoundField(field, "pickableDecor"));
+			}
+		}
 
-		classNode.methods.stream()
-				.filter(p -> p.name.equals("<init>"))
-				.findFirst()
-				.ifPresent(method -> {
-					final List<List<AbstractInsnNode>> all = Mask.findAll(method, Mask.ILOAD, Mask.PUTFIELD.own(classNode.name).distance(3));
+		for (MethodNode method : foundClass.getRef().methods) {
+			if (!method.name.equals("<init>")) {
+				continue;
+			}
 
-					final boolean[] xFound = {false};
-					final boolean[] yFound = {false};
+			final List<List<AbstractInsnNode>> positionMask = Mask.findAll(method, Mask.ILOAD, Mask.PUTFIELD.own(foundClass.getRef().name));
+			boolean xFound = false;
+			boolean yFound = false;
+			for (List<AbstractInsnNode> abstractInsnNodes : positionMask) {
 
-					for (List<AbstractInsnNode> abstractInsnNodes : all) {
-						final int[] index = {-1};
-
-						abstractInsnNodes.forEach(c -> {
-							if (c instanceof VarInsnNode) {
-								index[0] = ((VarInsnNode) c).var;
-							}
-
-							if (c instanceof FieldInsnNode) {
-								if (index[0] == 2 && !xFound[0]) {
-									xFound[0] = true;
-									Bootstrap.getBuilder().addField(classNode.name, ((FieldInsnNode) c).name).putName("OtterUpdater", "strictX");
-								} else if (index[0] == 3 && !yFound[0]) {
-									yFound[0] = true;
-									Bootstrap.getBuilder().addField(classNode.name, ((FieldInsnNode) c).name).putName("OtterUpdater", "strictY");
-								}
-							}
-						});
-					}
-
-					final List<AbstractInsnNode> abstractInsnNodes = Mask.find(method, Mask.DUP_X1, Mask.PUTFIELD.distance(2));
-					for (AbstractInsnNode abstractInsnNode : abstractInsnNodes) {
-						if (abstractInsnNode instanceof FieldInsnNode) {
-							Bootstrap.getBuilder().addField(classNode.name, ((FieldInsnNode) abstractInsnNode).name).putName("OtterUpdater", "plane");
+				int index = -1;
+				for (AbstractInsnNode ain : abstractInsnNodes) {
+					if (ain instanceof VarInsnNode) {
+						index = ((VarInsnNode) ain).var;
+					} else if (ain instanceof FieldInsnNode) {
+						if (index == 2 && !xFound) {
+							foundClass.addFields(new FoundField(foundClass.findField((FieldInsnNode) ain), "strictX"));
+							xFound = true;
+						} else if (index == 3 && !yFound) {
+							foundClass.addFields(new FoundField(foundClass.findField((FieldInsnNode) ain), "strictY"));
+							yFound = true;
 						}
 					}
-				});
+				}
+			}
+
+			final List<AbstractInsnNode> planeMask = Mask.find(method, Mask.DUP_X1, Mask.PUTFIELD);
+			for (AbstractInsnNode ain : planeMask) {
+				if (ain instanceof FieldInsnNode) {
+					foundClass.addFields(new FoundField(foundClass.findField((FieldInsnNode) ain), "plane"));
+				}
+			}
+
+			break;
+		}
 	}
 }

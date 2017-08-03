@@ -1,8 +1,11 @@
 package com.eclipseop.updater.analyzers.impl;
 
-import com.eclipseop.updater.Bootstrap;
 import com.eclipseop.updater.analyzers.Analyzer;
+import com.eclipseop.updater.util.found_shit.FoundClass;
+import com.eclipseop.updater.util.found_shit.FoundField;
+import com.eclipseop.updater.util.found_shit.FoundUtil;
 import org.objectweb.asm.tree.ClassNode;
+import org.objectweb.asm.tree.FieldNode;
 
 import java.util.ArrayList;
 
@@ -13,27 +16,22 @@ import java.util.ArrayList;
 public class SceneGraphAnalyzer extends Analyzer {
 
 	@Override
-	public ClassNode findClassNode(ArrayList<ClassNode> classNodes) {
-		final ClassNode[] classNode = new ClassNode[1];
+	public FoundClass identifyClass(ArrayList<ClassNode> classNodes) {
+		for (ClassNode classNode : classNodes) {
+			if (classNode.fieldCount("[[[I", true) == 2 && classNode.fieldCount("[[I", true) == 2) {
+				return new FoundClass(classNode, "SceneGraph").addExpectedField("tiles");
+			}
+		}
 
-		classNodes.stream()
-				.filter(p -> p.fieldCount("[[[I", true) == 2)
-				.filter(p -> p.fieldCount("[[I", true) == 2)
-				.forEach(c -> {
-					classNode[0] = c;
-					Bootstrap.getBuilder().addClass(c.name, "tiles").putName("OtterUpdater", "SceneGraph");
-				});
-
-		return classNode[0];
+		return null;
 	}
 
 	@Override
-	public void findHooks(ClassNode classNode) {
-		classNode.fields.stream()
-				.filter(p -> p.desc.equals("[[[L" + Bootstrap.getBuilder().findByName("Tile").getClassObsName() + ";"))
-				.findFirst()
-				.ifPresent(c -> {
-					Bootstrap.getBuilder().addField(classNode.name, c.name).putName("OtterUpdater", "tiles");
-				});
+	public void findHooks(FoundClass foundClass) {
+		for (FieldNode field : foundClass.getRef().fields) {
+			if (field.desc.equals("[[[" + FoundUtil.findClass("Tile").getRef().getWrappedName())) {
+				foundClass.addFields(new FoundField(field, "tiles"));
+			}
+		}
 	}
 }

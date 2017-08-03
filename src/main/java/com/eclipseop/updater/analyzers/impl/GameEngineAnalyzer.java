@@ -1,8 +1,10 @@
 package com.eclipseop.updater.analyzers.impl;
 
-import com.eclipseop.updater.Bootstrap;
 import com.eclipseop.updater.analyzers.Analyzer;
+import com.eclipseop.updater.util.found_shit.FoundClass;
+import com.eclipseop.updater.util.found_shit.FoundField;
 import org.objectweb.asm.tree.ClassNode;
+import org.objectweb.asm.tree.FieldNode;
 
 import java.util.ArrayList;
 
@@ -13,7 +15,27 @@ import java.util.ArrayList;
 public class GameEngineAnalyzer extends Analyzer {
 
 	@Override
-	public ClassNode findClassNode(ArrayList<ClassNode> classNodes) {
+	public FoundClass identifyClass(ArrayList<ClassNode> classNodes) {
+		for (ClassNode classNode : classNodes) {
+			if (classNode.superName.contains("applet")) {
+				return new FoundClass(classNode, "GameEngine").addExpectedField("canvas");
+			}
+		}
+
+		return null;
+	}
+
+	@Override
+	public void findHooks(FoundClass foundClass) {
+		for (FieldNode field : foundClass.getRef().fields) {
+			if (field.desc.contains("Canvas")) {
+				foundClass.addFields(new FoundField(field, "canvas"));
+			}
+		}
+	}
+	/*
+	@Override
+	public ClassNode identifyClass(ArrayList<ClassNode> classNodes) {
 		final ClassNode[] classNode = new ClassNode[1];
 
 		classNodes.stream()
@@ -31,4 +53,5 @@ public class GameEngineAnalyzer extends Analyzer {
 			Bootstrap.getBuilder().addField(classNode.name, c.name).putName("OtterUpdater", "canvas");
 		});
 	}
+	*/
 }
