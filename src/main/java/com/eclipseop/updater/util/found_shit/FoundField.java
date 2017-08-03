@@ -11,7 +11,7 @@ public class FoundField {
 	private final FieldNode ref;
 	private final String name;
 
-	private int multiplier;
+	private int multiplier = -1;
 
 	public FoundField(FieldNode ref, String name) {
 		this.ref = ref;
@@ -29,5 +29,9 @@ public class FoundField {
 	public FoundField setMultiplier(final int multiplier) {
 		this.multiplier = multiplier;
 		return this;
+	}
+
+	public int getMultiplier() {
+		return multiplier;
 	}
 }

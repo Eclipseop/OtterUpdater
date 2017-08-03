@@ -26,6 +26,10 @@ public interface Tree {
 		return false;
 	}
 
+	default boolean containsExpression(Class expression) {
+		return getLeft().getClass().equals(expression) || getRight().getClass().equals(expression);
+	}
+
 	default Expression find(Class find) {
 		if (getLeft().getClass().equals(find)) {
 			return getLeft();

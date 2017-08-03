@@ -32,6 +32,7 @@ public abstract class Analyzer {
 			System.out.println("Failed to find " + getClass().getSimpleName());
 			return;
 		}
+
 		FoundUtil.addClass(foundClass);
 
 		findHooks(foundClass);

@@ -32,6 +32,18 @@ public class FoundUtil {
 		return classNode.fields.stream().filter(p -> p.name.equals(fullname.split("\\.")[1])).findFirst().orElse(null);
 	}
 
+	public static FoundField findHookedField(final String fullname) {
+		for (FoundClass foundClass : foundClasses) {
+			for (FoundField foundField : foundClass.getFields()) {
+				if (foundField.getRef().name.equals(fullname.split("\\.")[1]) && foundField.getRef().owner.name.equals(fullname.split("\\.")[0])) {
+					return foundField;
+				}
+			}
+		}
+
+		return null;
+	}
+
 	public static void addClass(final FoundClass foundClass) {
 		foundClasses.add(foundClass);
 	}
@@ -63,7 +75,9 @@ public class FoundUtil {
 			System.out.println("⌂ " + foundClass.getName() + ": " + foundClass.getRef().name);
 			foundClass.getFields().sort(Comparator.comparing(o -> o.getRef().desc));
 			for (FoundField foundField : foundClass.getFields()) {
-				System.out.println("੦ " + prettyDesc(foundField.getRef().desc) + " " + foundField.getName() + " - " + foundField.getRef().owner + "." + foundField.getRef().name);
+
+				System.out.println("੦ " + prettyDesc(foundField.getRef().desc) + " " + foundField.getName() + " - " + foundField.getRef().owner + "." + foundField.getRef().name
+						+ (foundField.getMultiplier() != -1 ? " * " + foundField.getMultiplier() : ""));
 			}
 
 			for (String expectedField : foundClass.getExpectedFields()) {
