@@ -35,6 +35,7 @@ public class AbstractSyntaxTree {
 			switch (opcode) {
 				case Opcodes.GOTO:
 					final JumpInsnNode jin = (JumpInsnNode) ain;
+					//jin.label.getNext() // TODO: 8/2/2017 answer for following gotos
 					//System.out.println(jin.label.getLabel().getOffset());
 					break;
 				case Opcodes.NEWARRAY:

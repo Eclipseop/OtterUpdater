@@ -40,7 +40,7 @@ public class ActorAnalyzer extends Analyzer {
 				continue;
 			}
 
-			if (field.desc.equals("[B")) {
+			if (field.desc.equals("B")) {
 				foundClass.addFields(new FoundField(field, "hitsplatCount"));
 			}
 		}
