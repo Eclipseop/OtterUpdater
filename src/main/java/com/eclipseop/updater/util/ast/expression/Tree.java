@@ -30,11 +30,11 @@ public interface Tree {
 		return getLeft().getClass().equals(expression) || getRight().getClass().equals(expression);
 	}
 
-	default Expression find(Class find) {
+	default <T extends Expression> T find(Class<T> find) {
 		if (getLeft().getClass().equals(find)) {
-			return getLeft();
+			return (T) getLeft();
 		} else {
-			return getRight();
+			return (T) getRight();
 		}
 	}
 }

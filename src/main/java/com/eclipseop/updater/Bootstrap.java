@@ -84,7 +84,7 @@ public class Bootstrap {
 						}
 					}
 
-					final VarExpression ve = (VarExpression) me.find(VarExpression.class);
+					final VarExpression ve = me.find(VarExpression.class);
 					if (ve.getVarName().contains(".")) {
 						field = ve.getVarName();
 					} else if (isInteger(ve.getVarName())) {
@@ -95,7 +95,7 @@ public class Bootstrap {
 				}
 
 				if (me.containsExpression(InstanceExpression.class)) {
-					final InstanceExpression ie = (InstanceExpression) me.find(InstanceExpression.class);
+					final InstanceExpression ie = me.find(InstanceExpression.class);
 					field = ie.getFieldName();
 				}
 

@@ -111,13 +111,13 @@ public class PlayerAnalyzer extends Analyzer {
 					for (Expression expression : expressions) {
 						final ConditionExpression ce = (ConditionExpression) expression;
 						if (ce.isExpectedExpressions(IntegerExpression.class, MathExpression.class)) {
-							final IntegerExpression intExp = (IntegerExpression) ce.find(IntegerExpression.class);
+							final IntegerExpression intExp = ce.find(IntegerExpression.class);
 							if (intExp.getOperand() != 0) {
 								continue;
 							}
 
-							final MathExpression me = (MathExpression) ce.find(MathExpression.class);
-							final InstanceExpression ie = (InstanceExpression) me.find(InstanceExpression.class);
+							final MathExpression me = ce.find(MathExpression.class);
+							final InstanceExpression ie = me.find(InstanceExpression.class);
 
 							foundClass.addFields(new FoundField(FoundUtil.findField(ie.getFieldName()), "totalLevel"));
 							totalLevelFound = true;
@@ -133,7 +133,7 @@ public class PlayerAnalyzer extends Analyzer {
 						if (ce.isExpectedExpressions(MathExpression.class, MathExpression.class)) {
 							final MathExpression me = (MathExpression) ce.getLeft();
 							if (me.containsExpression(InstanceExpression.class)) {
-								final InstanceExpression ie = (InstanceExpression) me.find(InstanceExpression.class);
+								final InstanceExpression ie = me.find(InstanceExpression.class);
 
 								foundClass.addFields(new FoundField(FoundUtil.findField(ie.getFieldName()), "combatLevel"));
 								combatLevelFound = true;

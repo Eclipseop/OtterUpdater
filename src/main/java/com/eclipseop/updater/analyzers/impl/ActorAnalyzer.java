@@ -85,13 +85,13 @@ public class ActorAnalyzer extends Analyzer {
 					for (Expression expression : expressions) {
 						final ConditionExpression ce = (ConditionExpression) expression;
 						if (ce.isExpectedExpressions(MathExpression.class, IntegerExpression.class)) {
-							if (((IntegerExpression) ce.find(IntegerExpression.class)).getOperand() != -1) {
+							if (ce.find(IntegerExpression.class).getOperand() != -1) {
 								continue;
 							}
 
-							final MathExpression me = (MathExpression) ce.find(MathExpression.class);
+							final MathExpression me = ce.find(MathExpression.class);
 							if (me.isExpectedExpressions(InstanceExpression.class, VarExpression.class)) {
-								final InstanceExpression ie = (InstanceExpression) me.find(InstanceExpression.class);
+								final InstanceExpression ie = me.find(InstanceExpression.class);
 								foundClass.addFields(new FoundField(FoundUtil.findField(ie.getFieldName()), "animation"));
 								break animation;
 							}
