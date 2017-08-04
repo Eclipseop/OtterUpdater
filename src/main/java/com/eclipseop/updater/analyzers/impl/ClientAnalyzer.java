@@ -22,7 +22,8 @@ public class ClientAnalyzer extends Analyzer {
 	public FoundClass identifyClass(ArrayList<ClassNode> classNodes) {
 		for (ClassNode classNode : classNodes) {
 			if (classNode.name.equals("client")) {
-				return new FoundClass(classNode, "Client").addExpectedField("players", "localPlayer", "npcs", "clanMates", "interfaces", "grandExchangeOffers", "username", "energy", "mouseX", "mouseY");
+				return new FoundClass(classNode, "Client")
+						.addExpectedField("players", "localPlayer", "npcs", "clanMates", "interfaces", "grandExchangeOffers", "energy", "mouseX", "mouseY", "username", "password");
 			}
 		}
 
@@ -31,50 +32,92 @@ public class ClientAnalyzer extends Analyzer {
 
 	@Override
 	public void findHooks(FoundClass foundClass) {
-		getClassNodes().forEach(node -> {
-			node.fields.forEach(field -> {
-				final String desc = field.desc;
+		/*
+		for (ClassNode classNode : getClassNodes()) {
+			for (MethodNode methodNode : classNode.methods) {
+				if (methodNode.desc.contains(FoundUtil.findClass("RuneScript").getRef().getWrappedName()) ||
+						methodNode.desc.contains(FoundUtil.findClass("ScriptEvent").getRef().getWrappedName())) {
+					for (AbstractInsnNode ain : methodNode.instructions.toArray()) {
+						if (ain instanceof IntInsnNode) {
+							int operand = ((IntInsnNode) ain).operand;
+							switch (operand) {
+								case 3611:
+									//System.out.println(methodNode.owner + "." + methodNode.name);
+									break;
+							}
+						}
+					}
+				}
+			}
+		}
+		*/
+
+		for (ClassNode classNode : getClassNodes()) {
+			for (FieldNode fieldNode : classNode.fields) {
+				final String desc = fieldNode.desc;
 
 				if (desc.equals("[" + FoundUtil.findClass("Player").getRef().getWrappedName())) {
-					//Bootstrap.getBuilder().addField(classNode.name, field.name).putName("OtterUpdater", "players");
-					foundClass.addFields(new FoundField(field, "players"));
+					foundClass.addFields(new FoundField(fieldNode, "players"));
 				} else if (desc.equals(FoundUtil.findClass("Player").getRef().getWrappedName())) {
-					foundClass.addFields(new FoundField(field, "localPlayer"));
-					//Bootstrap.getBuilder().addField(classNode.name, field.name).putName("OtterUpdater", "localPlayer").putStatic(node.name);
+					foundClass.addFields(new FoundField(fieldNode, "localPlayer"));
 				} else if (desc.equals("[" + FoundUtil.findClass("Npc").getRef().getWrappedName())) {
-					foundClass.addFields(new FoundField(field, "npcs"));
-					//Bootstrap.getBuilder().addField(classNode.name, field.name).putName("OtterUpdater", "npcs");
+					foundClass.addFields(new FoundField(fieldNode, "npcs"));
 				} else if (desc.equals("[" + FoundUtil.findClass("ClanMate").getRef().getWrappedName())) {
-					foundClass.addFields(new FoundField(field, "clanMates"));
-					//Bootstrap.getBuilder().addField(classNode.name, field.name).putName("OtterUpdater", "clanMates").putStatic(node.name);
+					foundClass.addFields(new FoundField(fieldNode, "clanMates"));
 				} else if (desc.equals("[[" + FoundUtil.findClass("InterfaceComponent").getRef().getWrappedName())) {
-					foundClass.addFields(new FoundField(field, "interfaces"));
-					//Bootstrap.getBuilder().addField(classNode.name, field.name).putName("OtterUpdater", "interfaces").putStatic(node.name);
+					foundClass.addFields(new FoundField(fieldNode, "interfaces"));
 				} else if (desc.equals("[" + FoundUtil.findClass("GrandExchangeOffer").getRef().getWrappedName())) {
-					//Bootstrap.getBuilder().addField(classNode.name, field.name).putName("OtterUpdater", "grandExchangeOffers");
-					foundClass.addFields(new FoundField(field, "grandExchangeOffers"));
+					foundClass.addFields(new FoundField(fieldNode, "grandExchangeOffers"));
 				}
-			});
-		});
+			}
+		}
 
-		username:
+		boolean usernameFound = false;
+		boolean passwordFound = false;
+		login:
 		for (ClassNode classNode : getClassNodes()) {
-			List<MethodNode> methodNodes = classNode.methods;
-			final List<MethodNode> passwordMethods =
-					methodNodes.stream().filter(p -> p.access == Opcodes.ACC_STATIC && p.desc.startsWith("(" + FoundUtil.findClass("GameEngine").getRef().getWrappedName())).collect(Collectors.toList());
-
-			for (MethodNode methodNode : passwordMethods) {
-				final List<List<AbstractInsnNode>> all = Mask.findAll(methodNode, Mask.GETSTATIC.describe("Ljava/lang/String;"), Mask.INVOKEVIRTUAL.describe("()Ljava/lang/String;"), Mask.IFNE);
-				if (all == null) {
+			for (MethodNode methodNode : classNode.methods) {
+				if (methodNode.access != Opcodes.ACC_STATIC || !methodNode.desc.startsWith("(" + FoundUtil.findClass("GameEngine").getRef().getWrappedName())) {
 					continue;
 				}
-				for (List<AbstractInsnNode> abstractInsnNodes : all) {
-					for (AbstractInsnNode ain : abstractInsnNodes) {
-						if (ain instanceof FieldInsnNode) {
-							if (((FieldInsnNode) ain).owner.equals(methodNode.owner.name)) {
-								//System.out.println(((FieldInsnNode) ain).owner + "." + ((FieldInsnNode) ain).name);
-								foundClass.addFields(new FoundField(foundClass.findField((FieldInsnNode) ain), "username")); // TODO: 8/2/2017 suppose to be password, wtf why xd
-								break username;
+
+				final List<List<AbstractInsnNode>> all = Mask.findAll(
+						methodNode,
+						Mask.GETSTATIC.describe("Ljava/lang/String;"),
+						Mask.INVOKEVIRTUAL
+				);
+				if (all != null) {
+					for (List<AbstractInsnNode> abstractInsnNodes : all) {
+						for (AbstractInsnNode ain : abstractInsnNodes) {
+							if (ain instanceof MethodInsnNode) {
+								final MethodInsnNode min = (MethodInsnNode) ain;
+								if (min.name.equals("length")) {
+									int length = -1;
+									if (min.getNext() instanceof IntInsnNode) {
+										length = ((IntInsnNode) min.getNext()).operand;
+									}
+
+									String hookName;
+									if (length == 320 && !usernameFound) {
+										hookName = "username";
+										usernameFound = true;
+									} else if (length == 20 && !passwordFound) {
+										hookName = "password";
+										passwordFound = true;
+									} else {
+										continue;
+									}
+
+									if (min.getPrevious() instanceof FieldInsnNode) {
+										final FieldInsnNode fin = (FieldInsnNode) min.getPrevious();
+
+										foundClass.addFields(new FoundField(foundClass.findField(fin), hookName));
+
+										if (passwordFound && usernameFound) {
+											break login;
+										}
+									}
+								}
 							}
 						}
 					}
@@ -84,8 +127,9 @@ public class ClientAnalyzer extends Analyzer {
 
 		final List<MethodNode> energyMethods =
 				foundClass.getRef().methods.stream()
+						.filter(p -> p.access == 24)
 						.filter(p -> p.desc.startsWith("(" + FoundUtil.findClass("InterfaceComponent").getRef().getWrappedName()))
-						.collect(Collectors.toList()); // TODO: 7/29/2017 check access
+						.collect(Collectors.toList());
 		energy:
 		for (MethodNode methodNode : energyMethods) {
 			final List<List<AbstractInsnNode>> all = Mask.findAll(methodNode, Mask.BIPUSH.operand(11), Mask.IF_ICMPNE, Mask.GETSTATIC);
