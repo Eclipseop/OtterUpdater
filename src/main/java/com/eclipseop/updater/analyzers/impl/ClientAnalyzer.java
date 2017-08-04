@@ -23,7 +23,7 @@ public class ClientAnalyzer extends Analyzer {
 		for (ClassNode classNode : classNodes) {
 			if (classNode.name.equals("client")) {
 				return new FoundClass(classNode, "Client")
-						.addExpectedField("players", "localPlayer", "npcs", "clanMates", "interfaces", "grandExchangeOffers", "energy", "mouseX", "mouseY", "username", "password");
+						.addExpectedField("players", "localPlayer", "npcs", "clanMates", "interfaces", "grandExchangeOffers", "energy", "mouseX", "mouseY", "username", "password", "mouseRecorder");
 			}
 		}
 
@@ -68,6 +68,8 @@ public class ClientAnalyzer extends Analyzer {
 					foundClass.addFields(new FoundField(fieldNode, "interfaces"));
 				} else if (desc.equals("[" + FoundUtil.findClass("GrandExchangeOffer").getRef().getWrappedName())) {
 					foundClass.addFields(new FoundField(fieldNode, "grandExchangeOffers"));
+				} else if (desc.equals(FoundUtil.findClass("MouseRecorder").getRef().getWrappedName())) {
+					foundClass.addFields(new FoundField(fieldNode, "mouseRecorder"));
 				}
 			}
 		}
