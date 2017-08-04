@@ -178,6 +178,8 @@ public class AbstractSyntaxTree {
 					stack.remove(lastExpression);
 					break;
 				case Opcodes.IFNE:
+				case Opcodes.IF_ICMPLT:
+				case Opcodes.IF_ICMPLE:
 				case Opcodes.IF_ICMPEQ:
 				case Opcodes.IF_ICMPNE:
 				case Opcodes.IF_ICMPGT:
@@ -201,6 +203,10 @@ public class AbstractSyntaxTree {
 						operation = ">=";
 					} else if (opcode == Opcodes.IF_ICMPEQ) {
 						operation = "==";
+					} else if (opcode == Opcodes.IF_ICMPLE) {
+						operation = "<=";
+					} else if (opcode == Opcodes.IF_ICMPLT) {
+						operation = "<";
 					}
 
 					if (stack.size() >= 2) {
