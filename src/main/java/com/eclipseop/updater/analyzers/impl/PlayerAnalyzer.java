@@ -1,12 +1,16 @@
 package com.eclipseop.updater.analyzers.impl;
 
 import com.eclipseop.updater.analyzers.Analyzer;
-import com.eclipseop.updater.util.Mask;
+import com.eclipseop.updater.util.ast.AbstractSyntaxTree;
+import com.eclipseop.updater.util.ast.expression.Expression;
+import com.eclipseop.updater.util.ast.expression.impl.*;
 import com.eclipseop.updater.util.found_shit.FoundClass;
 import com.eclipseop.updater.util.found_shit.FoundField;
 import com.eclipseop.updater.util.found_shit.FoundUtil;
 import org.objectweb.asm.Opcodes;
-import org.objectweb.asm.tree.*;
+import org.objectweb.asm.tree.ClassNode;
+import org.objectweb.asm.tree.FieldNode;
+import org.objectweb.asm.tree.MethodNode;
 
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
@@ -48,7 +52,7 @@ public class PlayerAnalyzer extends Analyzer {
 	public FoundClass identifyClass(ArrayList<ClassNode> classNodes) {
 		for (ClassNode classNode : classNodes) {
 			if (Modifier.isFinal(classNode.access) && classNode.superName.equals(FoundUtil.findClass("Actor").getRef().name)) {
-				return new FoundClass(classNode, "Player").addExpectedField("name", "actions", "combatLevel", "totalLevel");
+				return new FoundClass(classNode, "Player").addExpectedField("name", "actions", "totalLevel");
 			}
 		}
 
@@ -67,6 +71,7 @@ public class PlayerAnalyzer extends Analyzer {
 			}
 		}
 
+		/*
 		boolean combatFound = false;
 		boolean totalFound = false;
 		level:
@@ -110,6 +115,34 @@ public class PlayerAnalyzer extends Analyzer {
 						if (combatFound && totalFound) {
 							break level;
 						}
+					}
+				}
+			}
+
+		}
+		*/
+
+		totalLevel:
+		for (ClassNode classNode : getClassNodes()) {
+			for (MethodNode methodNode : classNode.methods) {
+				if (methodNode.access != 24 || !methodNode.desc.startsWith("(" + foundClass.getRef().getWrappedName() + "III")) {
+					continue;
+				}
+
+				final List<Expression> expressions = AbstractSyntaxTree.find(methodNode, Opcodes.IFNE, Opcodes.IF_ICMPNE);
+				for (Expression expression : expressions) {
+					final ConditionExpression ce = (ConditionExpression) expression;
+					if (ce.isExpectedExpressions(IntegerExpression.class, MathExpression.class)) {
+						final IntegerExpression intExp = (IntegerExpression) ce.find(IntegerExpression.class);
+						if (intExp.getOperand() != 0 ) {
+							continue;
+						}
+
+						final MathExpression me = (MathExpression) ce.find(MathExpression.class);
+						final InstanceExpression ie = (InstanceExpression) me.find(InstanceExpression.class);
+
+						foundClass.addFields(new FoundField(FoundUtil.findField(ie.getFieldName()), "totalLevel"));
+						break totalLevel;
 					}
 				}
 			}

@@ -8,6 +8,7 @@ import org.objectweb.asm.tree.*;
 
 import java.util.*;
 import java.util.regex.Pattern;
+import java.util.stream.IntStream;
 
 /**
  * Created by Eclipseop.
@@ -17,7 +18,7 @@ public class AbstractSyntaxTree {
 
 	public static final Pattern OBJECT_PATTERN = Pattern.compile("L.+?;");
 
-	public static List<Expression> find(final MethodNode methodNode, final int opcodeToFind) {
+	public static List<Expression> find(final MethodNode methodNode, final int... opcodesToFind) {
 		final List<Expression> temp = new ArrayList<>();
 		final List<Expression> stack = new LinkedList<>();
 
@@ -176,14 +177,21 @@ public class AbstractSyntaxTree {
 				case Opcodes.IFEQ:
 					stack.remove(lastExpression);
 					break;
+				case Opcodes.IFNE:
 				case Opcodes.IF_ICMPEQ:
 				case Opcodes.IF_ICMPNE:
 				case Opcodes.IF_ICMPGT:
 				case Opcodes.IF_ICMPGE:
-								/*
-								stack.remove(stack.size() - 2);
-								stack.remove(lastExpression);
-								*/
+					/*
+					stack.remove(stack.size() - 2);
+					stack.remove(lastExpression);
+					*/
+
+					if (opcode == Opcodes.IFNE) {
+						stack.add(new ConditionExpression(lastExpression, new IntegerExpression(0), "!="));
+						break;
+					}
+
 					String operation = "";
 					if (opcode == Opcodes.IF_ICMPNE) {
 						operation = "!=";
@@ -205,7 +213,7 @@ public class AbstractSyntaxTree {
 			}
 			//System.out.println(Printer.OPCODES[opcode]);
 
-			if (opcodeToFind == opcode) {
+			if (IntStream.of(opcodesToFind).anyMatch(p -> p == opcode)) {
 				temp.add(stack.get(stack.size() - 1));
 			}
 
