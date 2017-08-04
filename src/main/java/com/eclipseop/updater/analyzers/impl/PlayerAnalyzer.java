@@ -1,14 +1,16 @@
 package com.eclipseop.updater.analyzers.impl;
 
 import com.eclipseop.updater.analyzers.Analyzer;
+import com.eclipseop.updater.util.Mask;
 import com.eclipseop.updater.util.found_shit.FoundClass;
 import com.eclipseop.updater.util.found_shit.FoundField;
 import com.eclipseop.updater.util.found_shit.FoundUtil;
-import org.objectweb.asm.tree.ClassNode;
-import org.objectweb.asm.tree.FieldNode;
+import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.tree.*;
 
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created by Eclipseop.
@@ -46,7 +48,7 @@ public class PlayerAnalyzer extends Analyzer {
 	public FoundClass identifyClass(ArrayList<ClassNode> classNodes) {
 		for (ClassNode classNode : classNodes) {
 			if (Modifier.isFinal(classNode.access) && classNode.superName.equals(FoundUtil.findClass("Actor").getRef().name)) {
-				return new FoundClass(classNode, "Player").addExpectedField("name", "actions");
+				return new FoundClass(classNode, "Player").addExpectedField("name", "actions", "combatLevel", "totalLevel");
 			}
 		}
 
@@ -61,6 +63,54 @@ public class PlayerAnalyzer extends Analyzer {
 					foundClass.addFields(new FoundField(fieldNode, "name"));
 				} else if (fieldNode.desc.equals("[Ljava/lang/String;")) {
 					foundClass.addFields(new FoundField(fieldNode, "actions"));
+				}
+			}
+		}
+
+		boolean combatFound = false;
+		boolean totalFound = false;
+		level:
+		for (MethodNode methodNode : foundClass.getRef().methods) {
+			if (methodNode.access != Opcodes.ACC_FINAL || !methodNode.desc.startsWith("(" + FoundUtil.findClass("Buffer").getRef().getWrappedName())) {
+				continue;
+			}
+
+			final List<List<AbstractInsnNode>> all = Mask.findAll(
+					methodNode,
+					Mask.BIPUSH,
+					Mask.INVOKEVIRTUAL,
+					Mask.PUTFIELD.describe("I")
+			);
+			if (all == null) {
+				continue;
+			}
+
+			int operand = -1;
+			for (List<AbstractInsnNode> abstractInsnNodes : all) {
+				for (AbstractInsnNode ain : abstractInsnNodes) {
+					if (ain instanceof IntInsnNode) {
+						operand = ((IntInsnNode) ain).operand;
+						continue;
+					}
+
+					if (ain instanceof FieldInsnNode) {
+						String hookName = null;
+						if (operand == -109 && !totalFound) {
+							hookName = "totalLevel";
+							totalFound = true;
+						} else if (operand == -113 && !combatFound) {
+							hookName = "combatLevel";
+							combatFound = true;
+						} else {
+							continue;
+						}
+
+						foundClass.addFields(new FoundField(foundClass.findField((FieldInsnNode) ain), hookName));
+
+						if (combatFound && totalFound) {
+							break level;
+						}
+					}
 				}
 			}
 		}

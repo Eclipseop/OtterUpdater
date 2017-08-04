@@ -42,6 +42,7 @@ public class Bootstrap {
 	private static void loadAnalyzers() {
 		analyzers.add(new NodeAnalyzer());
 		analyzers.add(new DoublyNodeAnalyzer());
+		analyzers.add(new BufferAnalyzer());
 		analyzers.add(new EntityAnalyzer());
 		analyzers.add(new PickableDecorAnalyzer());
 		analyzers.add(new PickableNodeAnalyzer());
@@ -58,7 +59,6 @@ public class Bootstrap {
 		analyzers.add(new ScriptEventAnalyzer());
 		analyzers.add(new InterfaceComponentAnalyzer());
 		analyzers.add(new FontAnalyzer());
-		analyzers.add(new BufferAnalyzer());
 		analyzers.add(new GrandExchangeOffer());
 		analyzers.add(new MouseRecorderAnalyzer());
 		analyzers.add(new ClientAnalyzer());
