@@ -69,40 +69,39 @@ public class Bootstrap {
 		final HashMap<String, ArrayList<Integer>> dankMap = new HashMap<>();
 
 		for (Expression expression : list) {
-			if (expression instanceof MathExpression) {
-				final MathExpression me = (MathExpression) expression;
+			final MathExpression me = (MathExpression) expression;
 
-				String field = null;
-				int multi = -1;
+			String field = null;
+			int multi = -1;
 
-				if (me.containsExpression(VarExpression.class)) {
-					if (me.isExpectedExpressions(VarExpression.class, VarExpression.class)) {
-						final VarExpression right = (VarExpression) me.getRight();
+			if (me.containsExpression(VarExpression.class)) {
+				if (me.isExpectedExpressions(VarExpression.class, VarExpression.class)) {
+					final VarExpression right = (VarExpression) me.getRight();
 
-						if (isInteger(right.getVarName())) {
-							multi = Integer.parseInt(right.getVarName());
-						}
+					if (isInteger(right.getVarName())) {
+						multi = Integer.parseInt(right.getVarName());
 					}
-
-					final VarExpression ve = me.find(VarExpression.class);
-					if (ve.getVarName().contains(".")) {
-						field = ve.getVarName();
-					} else if (isInteger(ve.getVarName())) {
-						multi = Integer.parseInt(ve.getVarName());
-					}
-				} else {
-					continue;
 				}
 
-				if (me.containsExpression(InstanceExpression.class)) {
-					final InstanceExpression ie = me.find(InstanceExpression.class);
-					field = ie.getFieldName();
+				final VarExpression ve = me.find(VarExpression.class);
+				if (ve.getVarName().contains(".")) {
+					field = ve.getVarName();
+				} else if (isInteger(ve.getVarName())) {
+					multi = Integer.parseInt(ve.getVarName());
 				}
-
-				if (field != null && multi != -1) {
-					dankMap.computeIfAbsent(field, f -> new ArrayList<>()).add(multi);
-				}
+			} else {
+				continue;
 			}
+
+			if (me.containsExpression(InstanceExpression.class)) {
+				final InstanceExpression ie = me.find(InstanceExpression.class);
+				field = ie.getFieldName();
+			}
+
+			if (field != null && multi != -1) {
+				dankMap.computeIfAbsent(field, f -> new ArrayList<>()).add(multi);
+			}
+
 		}
 
 		dankMap.keySet().forEach(c -> {
