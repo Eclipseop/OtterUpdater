@@ -29,7 +29,7 @@ public class Bootstrap {
 
 	static {
 		try {
-			classNodes = JarUtil.parseJar(new JarFile("C:\\Users\\eclip\\Desktop\\pepes\\gamepack\\151.jar"));
+			classNodes = JarUtil.parseJar(new JarFile("C:\\Users\\eclip\\Desktop\\pepes\\gamepack\\152.jar"));
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -172,6 +172,21 @@ public class Bootstrap {
 			System.out.println();
 
 			FoundUtil.print();
+
+			/*
+			final ClassNode node = Deobfuscation.test(FoundUtil.findClass("Node").getRef());
+
+			ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_MAXS | ClassWriter.COMPUTE_FRAMES);
+			node.accept(cw);
+
+			//Dump the class in a file
+			File outDir = new File("G:\\Dropbox\\programming\\Updater\\src\\main\\java");
+			outDir.mkdirs();
+			DataOutputStream dout = new DataOutputStream(new FileOutputStream(new File(outDir, "Node.class")));
+			dout.write(cw.toByteArray());
+			dout.flush();
+			dout.close();
+			*/
 
 		} catch (Exception e) {
 			e.printStackTrace();

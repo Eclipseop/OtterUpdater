@@ -23,6 +23,15 @@ public class FoundUtil {
 		return foundClasses.stream().filter(p -> p.getName().equals(name)).findFirst().orElse(null);
 	}
 
+	public static FoundClass findClass(final ClassNode classNode) {
+		for (FoundClass foundClass : foundClasses) {
+			if (foundClass.getRef().equals(classNode)) {
+				return foundClass;
+			}
+		}
+		return null;
+	}
+
 	public static FieldNode findField(final String fullname) {
 		final ClassNode classNode = foundClasses.stream()
 				.map(FoundClass::getRef)

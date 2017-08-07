@@ -33,9 +33,11 @@ public class DoublyNodeAnalyzer extends Analyzer {
 	public void findHooks(FoundClass foundClass) {
 		String temp = null;
 		for (MethodNode method : foundClass.getRef().methods) {
-			if (Modifier.isStatic(method.access)) {
+			if (Modifier.isStatic(method.access) || method.name.equals("<init>")) {
 				continue;
 			}
+
+			//System.out.println(method.name);
 
 			for (AbstractInsnNode ain : method.instructions.toArray()) {
 				if (ain instanceof FieldInsnNode) {
