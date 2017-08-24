@@ -1,6 +1,7 @@
 package com.eclipseop.updater.util.ast.expression.impl;
 
 import com.eclipseop.updater.util.ast.expression.Expression;
+import org.objectweb.asm.tree.AbstractInsnNode;
 
 /**
  * Created by Eclipseop.
@@ -10,7 +11,8 @@ public class VarExpression extends Expression {
 
 	private String varName;
 
-	public VarExpression(String varName) {
+	public VarExpression(AbstractInsnNode ref, String varName) {
+		super(ref);
 		this.varName = varName;
 	}
 
@@ -23,5 +25,10 @@ public class VarExpression extends Expression {
 		return "VarExpression{" +
 				"varName='" + varName + '\'' +
 				'}';
+	}
+
+	@Override
+	public boolean consumesStack() {
+		return true;
 	}
 }

@@ -2,6 +2,7 @@ package com.eclipseop.updater.util.ast.expression.impl;
 
 import com.eclipseop.updater.util.ast.expression.Expression;
 import com.eclipseop.updater.util.ast.expression.Tree;
+import org.objectweb.asm.tree.AbstractInsnNode;
 
 /**
  * Created by Eclipseop.
@@ -13,7 +14,8 @@ public class MathExpression extends Expression implements Tree {
 	private Expression left;
 	private Expression right;
 
-	public MathExpression(String operator, Expression left, Expression right) {
+	public MathExpression(AbstractInsnNode ref, String operator, Expression left, Expression right) {
+		super(ref);
 		this.operator = operator;
 		this.left = left;
 		this.right = right;
@@ -38,5 +40,10 @@ public class MathExpression extends Expression implements Tree {
 		return "MathExpression{" +
 				left + " " + operator + " " + right +
 				'}';
+	}
+
+	@Override
+	public boolean consumesStack() {
+		return true;
 	}
 }

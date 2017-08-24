@@ -29,7 +29,7 @@ public class Bootstrap {
 
 	static {
 		try {
-			classNodes = JarUtil.parseJar(new JarFile("C:\\Users\\eclip\\Desktop\\pepes\\gamepack\\152.jar"));
+			classNodes = JarUtil.parseJar(new JarFile("C:\\Users\\eclip\\Desktop\\pepes\\gamepack\\154.jar"));
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -75,11 +75,14 @@ public class Bootstrap {
 			int multi = -1;
 
 			if (me.containsExpression(VarExpression.class)) {
+				//System.out.println(me);
 				if (me.isExpectedExpressions(VarExpression.class, VarExpression.class)) {
 					final VarExpression right = (VarExpression) me.getRight();
 
 					if (isInteger(right.getVarName())) {
 						multi = Integer.parseInt(right.getVarName());
+					} else {
+						field = right.getVarName();
 					}
 				}
 
@@ -99,7 +102,9 @@ public class Bootstrap {
 			}
 
 			if (field != null && multi != -1) {
-				dankMap.computeIfAbsent(field, f -> new ArrayList<>()).add(multi);
+				if (field.contains(".")) {
+					dankMap.computeIfAbsent(field, f -> new ArrayList<>()).add(multi);
+				}
 			}
 
 		}

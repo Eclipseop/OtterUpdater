@@ -2,21 +2,22 @@ package com.eclipseop.updater.util.ast.expression.impl;
 
 import com.eclipseop.updater.util.ast.expression.Expression;
 import com.eclipseop.updater.util.ast.expression.Tree;
+import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.tree.AbstractInsnNode;
 
 /**
  * Created by Eclipseop.
  * Date: 7/28/2017.
  */
-public class ConditionExpression extends Expression implements Tree {
+public class ConditionExpression extends Expression implements Tree { //most the time: value, value ->
 
 	private Expression left;
 	private Expression right;
-	private String operation;
 
-	public ConditionExpression(Expression left, Expression right, String operation) {
+	public ConditionExpression(AbstractInsnNode ref, Expression left, Expression right) {
+		super(ref);
 		this.left = left;
 		this.right = right;
-		this.operation = operation;
 	}
 
 	@Override
@@ -30,15 +31,28 @@ public class ConditionExpression extends Expression implements Tree {
 	}
 
 	public String getOperation() {
+		String operation = null;
+		final int opcode = getRef().opcode();
+
+		if (opcode == Opcodes.IF_ICMPNE || opcode == Opcodes.IFNONNULL) {
+			operation = "!=";
+		} else if (opcode == Opcodes.IF_ICMPGT) {
+			operation = ">";
+		} else if (opcode == Opcodes.IF_ICMPGE) {
+			operation = ">=";
+		} else if (opcode == Opcodes.IF_ICMPEQ) {
+			operation = "==";
+		} else if (opcode == Opcodes.IF_ICMPLE) {
+			operation = "<=";
+		} else if (opcode == Opcodes.IF_ICMPLT) {
+			operation = "<";
+		}
+
 		return operation;
 	}
 
 	@Override
-	public String toString() {
-		return "ConditionExpression{" +
-				"left=" + left +
-				", right=" + right +
-				", operation='" + operation + '\'' +
-				'}';
+	public boolean consumesStack() {
+		return true;
 	}
 }

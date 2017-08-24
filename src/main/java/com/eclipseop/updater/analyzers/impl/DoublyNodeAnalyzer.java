@@ -37,8 +37,6 @@ public class DoublyNodeAnalyzer extends Analyzer {
 				continue;
 			}
 
-			//System.out.println(method.name);
-
 			for (AbstractInsnNode ain : method.instructions.toArray()) {
 				if (ain instanceof FieldInsnNode) {
 					final FieldInsnNode fin = (FieldInsnNode) ain;

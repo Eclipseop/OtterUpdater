@@ -1,6 +1,7 @@
 package com.eclipseop.updater.util.ast.expression.impl;
 
 import com.eclipseop.updater.util.ast.expression.Expression;
+import org.objectweb.asm.tree.AbstractInsnNode;
 
 import java.util.Arrays;
 
@@ -13,7 +14,8 @@ public class InvokeExpression extends Expression {
 	private String returnType;
 	private Expression[] params;
 
-	public InvokeExpression(String returnType, Expression... params) {
+	public InvokeExpression(AbstractInsnNode ref, String returnType, Expression[] params) {
+		super(ref);
 		this.returnType = returnType;
 		this.params = params;
 	}
@@ -32,5 +34,10 @@ public class InvokeExpression extends Expression {
 				"returnType='" + returnType + '\'' +
 				", params=" + Arrays.toString(params) +
 				'}';
+	}
+
+	@Override
+	public boolean consumesStack() {
+		return true;
 	}
 }

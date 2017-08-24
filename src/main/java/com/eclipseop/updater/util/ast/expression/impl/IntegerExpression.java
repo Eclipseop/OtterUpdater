@@ -1,6 +1,9 @@
 package com.eclipseop.updater.util.ast.expression.impl;
 
 import com.eclipseop.updater.util.ast.expression.Expression;
+import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.tree.AbstractInsnNode;
+import org.objectweb.asm.tree.IntInsnNode;
 
 /**
  * Created by Eclipseop.
@@ -8,20 +11,24 @@ import com.eclipseop.updater.util.ast.expression.Expression;
  */
 public class IntegerExpression extends Expression {
 
-	private int operand;
-
-	public IntegerExpression(int operand) {
-		this.operand = operand;
+	public IntegerExpression(AbstractInsnNode ref) {
+		super(ref);
 	}
 
 	public int getOperand() {
-		return operand;
+		if (getRef() == null) {
+			return 0;
+		}
+
+		if (getRef().opcode() >= 2 && getRef().opcode() <= 8) {
+			return getRef().opcode() - Opcodes.ICONST_0;
+		}
+
+		return ((IntInsnNode) getRef()).operand;
 	}
 
 	@Override
-	public String toString() {
-		return "IntegerExpression{" +
-				"operand=" + operand +
-				'}';
+	public boolean consumesStack() {
+		return false;
 	}
 }

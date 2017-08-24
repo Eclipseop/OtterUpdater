@@ -1,13 +1,16 @@
 package com.eclipseop.updater.deob;
 
+import com.eclipseop.updater.util.ast.AbstractSyntaxTree;
+import com.eclipseop.updater.util.ast.expression.Expression;
+import com.eclipseop.updater.util.ast.expression.impl.ConditionExpression;
 import com.eclipseop.updater.util.found_shit.FoundClass;
 import com.eclipseop.updater.util.found_shit.FoundField;
 import com.eclipseop.updater.util.found_shit.FoundUtil;
-import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.ClassNode;
-import org.objectweb.asm.tree.FieldInsnNode;
 import org.objectweb.asm.tree.FieldNode;
 import org.objectweb.asm.tree.MethodNode;
+
+import java.util.List;
 
 /**
  * Created by Eclipseop.
@@ -39,7 +42,14 @@ public class Deobfuscation {
 					classNode, method.access, method.name, method.desc, method.signature, null
 			);
 
-			newMethod.instructions.add(new FieldInsnNode(Opcodes.GETSTATIC, "cm", "gc", "J"));
+			//System.out.println(method.name);
+
+			final List<Expression> expressions = AbstractSyntaxTree.find(method);
+			for (Expression expression : expressions) {
+				if (expression instanceof ConditionExpression) {
+					//newMethod.instructions.add(new JumpInsnNode());
+				}
+			}
 
 			classNode.methods.add(newMethod);
 		}

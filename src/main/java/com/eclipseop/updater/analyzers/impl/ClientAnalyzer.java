@@ -23,7 +23,7 @@ public class ClientAnalyzer extends Analyzer {
 		for (ClassNode classNode : classNodes) {
 			if (classNode.name.equals("client")) {
 				return new FoundClass(classNode, "Client")
-						.addExpectedField("players", "localPlayer", "npcs", "clanMates", "interfaces", "grandExchangeOffers", "energy", "mouseX", "mouseY", "username", "password", "mouseRecorder");
+						.addExpectedField("players", "localPlayer", "npcs", "clanMates", "interfaces", "grandExchangeOffers", "energy", "mouseX", "mouseY", "username", "password", "mouseRecorder", "loginState", "loginResponse1", "loginResponse2", "loginResponse3", "loginWorldSelectorOpen");
 			}
 		}
 
@@ -74,53 +74,52 @@ public class ClientAnalyzer extends Analyzer {
 			}
 		}
 
-		boolean usernameFound = false;
-		boolean passwordFound = false;
+		int loginFound = 0;
 		login:
 		for (ClassNode classNode : getClassNodes()) {
-			for (MethodNode methodNode : classNode.methods) {
-				if (methodNode.access != Opcodes.ACC_STATIC || !methodNode.desc.startsWith("(" + FoundUtil.findClass("GameEngine").getRef().getWrappedName())) {
-					continue;
-				}
+			if (classNode.fieldCount("Ljava/lang/String;", false) == 9) {
+				for (MethodNode methodNode : classNode.methods) {
+					if (!methodNode.name.equals("<clinit>")) {
+						continue;
+					}
 
-				final List<List<AbstractInsnNode>> all = Mask.findAll(
-						methodNode,
-						Mask.GETSTATIC.describe("Ljava/lang/String;"),
-						Mask.INVOKEVIRTUAL
-				);
-				if (all != null) {
-					for (List<AbstractInsnNode> abstractInsnNodes : all) {
-						for (AbstractInsnNode ain : abstractInsnNodes) {
-							if (ain instanceof MethodInsnNode) {
-								final MethodInsnNode min = (MethodInsnNode) ain;
-								if (min.name.equals("length")) {
-									int length = -1;
-									if (min.getNext() instanceof IntInsnNode) {
-										length = ((IntInsnNode) min.getNext()).operand;
-									}
+					AbstractInsnNode ain = methodNode.instructions.getFirst();
+					while ((ain = ain.getNext()) != null) {
 
-									String hookName;
-									if (length == 320 && !usernameFound) {
-										hookName = "username";
-										usernameFound = true;
-									} else if (length == 20 && !passwordFound) {
-										hookName = "password";
-										passwordFound = true;
-									} else {
-										continue;
-									}
+						if (loginFound >= 28) {
+							break login;
+						}
 
-									if (min.getPrevious() instanceof FieldInsnNode) {
-										final FieldInsnNode fin = (FieldInsnNode) min.getPrevious();
-
-										foundClass.addFields(new FoundField(foundClass.findField(fin), hookName));
-
-										if (passwordFound && usernameFound) {
-											break login;
-										}
-									}
-								}
+						if (ain.opcode() == Opcodes.GOTO) {
+							ain = ((JumpInsnNode) ain).label.getNext();
+						} else if (ain.opcode() == Opcodes.PUTSTATIC) {
+							loginFound++;
+							if (loginFound == 1) {
+								continue;
 							}
+
+							String name = null;
+							if (loginFound == 12) {
+								name = "loginState";
+							} else if (loginFound == 14) {
+								name = "loginResponse1";
+							} else if (loginFound == 15) {
+								name = "loginResponse2";
+							} else if (loginFound == 16) {
+								name = "loginResponse3";
+							} else if (loginFound == 17) {
+								name = "username";
+							} else if (loginFound == 18) {
+								name = "password";
+							} else if (loginFound == 26) {
+								name = "loginWorldSelectorOpen";
+							}
+
+							if (name == null) {
+								continue;
+							}
+
+							foundClass.addFields(new FoundField(foundClass.findField((FieldInsnNode) ain), name));
 						}
 					}
 				}
